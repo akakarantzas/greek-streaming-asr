@@ -21,6 +21,8 @@ from src.asr.model_loader import DEFAULT_MODEL_ID, get_gpu_memory_allocated_mb, 
 from src.eval.cer import compute_cer
 from src.eval.manifest import load_jsonl_manifest
 from src.eval.wer import compute_wer
+from src.profiling.stats import mean as _mean
+from src.profiling.stats import percentile
 
 
 LANGUAGE_CHOICES = ("el",)
@@ -255,19 +257,6 @@ def language_readiness_for(language: str) -> tuple[str, list[str]]:
     raise ValueError(f"Unsupported language: {language}")
 
 
-def percentile(values: list[float], percentile_value: float) -> float | None:
-    if not values:
-        return None
-    sorted_values = sorted(values)
-    if len(sorted_values) == 1:
-        return sorted_values[0]
-    rank = (len(sorted_values) - 1) * (percentile_value / 100)
-    lower = int(rank)
-    upper = min(lower + 1, len(sorted_values) - 1)
-    weight = rank - lower
-    return sorted_values[lower] * (1 - weight) + sorted_values[upper] * weight
-
-
 def print_summary(summary: dict) -> None:
     columns = [
         "language",
@@ -341,12 +330,6 @@ def _coerce_warnings(value: Any) -> list[str]:
     if isinstance(value, str):
         return [value]
     return [str(item) for item in value]
-
-
-def _mean(values: list[float]) -> float | None:
-    if not values:
-        return None
-    return sum(values) / len(values)
 
 
 def _format_summary_value(value: Any) -> str:

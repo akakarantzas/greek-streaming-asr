@@ -5,6 +5,9 @@ import time
 from pathlib import Path
 from typing import Callable
 
+from src.profiling.stats import mean as _mean
+from src.profiling.stats import percentile as _percentile
+
 
 class LatencyTracker:
     def __init__(self, clock: Callable[[], float] = time.perf_counter) -> None:
@@ -47,22 +50,3 @@ class LatencyTracker:
             json.dumps(self.summary(), indent=2) + "\n",
             encoding="utf-8",
         )
-
-
-def _mean(values: list[float]) -> float | None:
-    if not values:
-        return None
-    return sum(values) / len(values)
-
-
-def _percentile(values: list[float], percentile: float) -> float | None:
-    if not values:
-        return None
-    sorted_values = sorted(values)
-    if len(sorted_values) == 1:
-        return sorted_values[0]
-    rank = (len(sorted_values) - 1) * (percentile / 100)
-    lower = int(rank)
-    upper = min(lower + 1, len(sorted_values) - 1)
-    weight = rank - lower
-    return sorted_values[lower] * (1 - weight) + sorted_values[upper] * weight

@@ -5,10 +5,11 @@ import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from statistics import mean
 from typing import Any
 
 from src.asr.infer import _build_transcribe_call
+from src.profiling.stats import mean as _mean
+from src.profiling.stats import percentile as _percentile
 
 
 NVIDIA_SMI_QUERY = (
@@ -374,25 +375,6 @@ def _parse_float(value: str) -> float | None:
         return float(value)
     except ValueError:
         return None
-
-
-def _mean(values: list[float]) -> float | None:
-    if not values:
-        return None
-    return float(mean(values))
-
-
-def _percentile(values: list[float], percentile: float) -> float | None:
-    if not values:
-        return None
-    sorted_values = sorted(values)
-    if len(sorted_values) == 1:
-        return sorted_values[0]
-    rank = (len(sorted_values) - 1) * (percentile / 100)
-    lower = int(rank)
-    upper = min(lower + 1, len(sorted_values) - 1)
-    weight = rank - lower
-    return sorted_values[lower] * (1 - weight) + sorted_values[upper] * weight
 
 
 def _mean_present(values: Any) -> float | None:

@@ -14,6 +14,8 @@ if str(REPO_ROOT) not in sys.path:
 from src.asr.model_loader import DEFAULT_MODEL_ID, load_model  # noqa: E402
 from src.asr.streaming_asr import ChunkedASRSession  # noqa: E402
 from src.audio.microphone import DEFAULT_SAMPLE_RATE, MicrophoneAudioStream  # noqa: E402
+from src.profiling.stats import mean as _mean  # noqa: E402
+from src.profiling.stats import percentile  # noqa: E402
 
 
 LANGUAGE_CHOICES = ("el",)
@@ -183,19 +185,6 @@ def chunk_ms_to_samples(chunk_ms: int, sample_rate: int) -> int:
     return max(1, int(sample_rate * (chunk_ms / 1000)))
 
 
-def percentile(values: list[float], percentile_value: float) -> float | None:
-    if not values:
-        return None
-    sorted_values = sorted(values)
-    if len(sorted_values) == 1:
-        return sorted_values[0]
-    rank = (len(sorted_values) - 1) * (percentile_value / 100)
-    lower = int(rank)
-    upper = min(lower + 1, len(sorted_values) - 1)
-    weight = rank - lower
-    return sorted_values[lower] * (1 - weight) + sorted_values[upper] * weight
-
-
 def get_gpu_name() -> str | None:
     try:
         import torch
@@ -214,12 +203,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (RuntimeError, ValueError, ImportError) as exc:
         print(f"Streaming demo failed: {exc}", file=sys.stderr)
         return 1
-
-
-def _mean(values: list[float]) -> float | None:
-    if not values:
-        return None
-    return sum(values) / len(values)
 
 
 def _format_optional_float(value: Any) -> str:
