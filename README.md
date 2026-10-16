@@ -12,6 +12,8 @@ Status: pre-baseline. Environment checks and pipeline scaffolding are present; m
 
 ## Status
 
+Detailed milestones are in `docs/milestone_checklist.md`.
+
 - [x] Repository scaffold
 - [x] Environment verification script
 - [x] Model smoke-load script
@@ -82,11 +84,21 @@ python scripts/verify_environment.py --json-output reports/environment.json
 python scripts/smoke_load_model.py
 ```
 
+`smoke_load_model.py` also accepts `--device` and `--revision`.
+
+Transcribe a single file:
+
+```bash
+python -m src.asr.infer --audio path/to/audio.wav --output experiments/baseline/single_file_result.json
+```
+
 Run evaluation:
 
 ```bash
 python scripts/run_batch_eval.py --manifest data/manifests/el.jsonl --language el --target-lang el-GR --output experiments/baseline/el_results.csv
 ```
+
+`--language` and `--target-lang` must agree: the only supported pair is `el` with `el-GR`. The streaming demo and single-file inference also accept `--target-lang auto`.
 
 Run the streaming demo:
 
@@ -99,6 +111,12 @@ Profile and plot:
 ```bash
 python scripts/profile_inference.py --manifest data/manifests/el.jsonl --language el --target-lang el-GR --output-dir experiments/baseline/profile_el
 python scripts/make_benchmark_plots.py --input-dir experiments/baseline/profile_el --output-dir reports/figures
+```
+
+Validate fine-tuning inputs (does not start training):
+
+```bash
+python experiments/finetuning/validate_finetuning_inputs.py --config experiments/finetuning/greek_finetune_config_template.json
 ```
 
 Run tests (no GPU needed; `requirements-test.txt` is enough, and CI uses it on Python 3.10 and 3.12):
@@ -147,7 +165,10 @@ scripts/         CLI entry points
 data/            Manifests and sample placeholders
 experiments/     Baseline and fine-tuning outputs
 reports/         Result schemas and figures
+docs/            Milestone checklist
 tests/           Unit tests
+.github/         CI workflow
+context.md       Running project notes (model, hardware, confirmed findings)
 ```
 
 ## License

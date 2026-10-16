@@ -12,9 +12,9 @@
 
 ## Milestone 1 - Evaluation Infrastructure
 
-- [ ] WER implemented and tested
-- [ ] CER implemented and tested
-- [ ] manifest validator implemented
+- [x] WER implemented and tested
+- [x] CER implemented and tested
+- [x] manifest validator implemented
 - [ ] Greek test manifest created and labeled adaptation-ready/exploratory
 - [ ] normalized baseline WER table generated
 - [ ] raw/cased/punctuated scoring TODO documented
@@ -39,8 +39,8 @@
 
 ## Milestone 4 - Profiling and Benchmarking
 
-- [ ] latency tracker implemented
-- [ ] GPU snapshot implemented
+- [x] latency tracker implemented
+- [x] GPU snapshot implemented
 - [ ] profiling script runs
 - [ ] concurrency simulation runs
 - [ ] benchmark plots generated

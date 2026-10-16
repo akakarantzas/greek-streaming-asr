@@ -1,6 +1,6 @@
 # Project Context
 
-Status: Pre-Milestone 0
+Status: Pre-baseline (scaffolding done; hardware results not yet recorded)
 
 Hardware: NVIDIA DGX Spark
 
