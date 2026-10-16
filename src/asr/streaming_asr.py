@@ -14,9 +14,9 @@ from src.asr.infer import (
     _build_transcribe_call,
     extract_transcript_text,
 )
+from src.audio.microphone import DEFAULT_SAMPLE_RATE
 
 
-DEFAULT_SAMPLE_RATE = 16000
 DEFAULT_INFERENCE_INTERVAL_S = 1.0
 DEFAULT_MAX_BUFFER_DURATION_S = 10.0
 
