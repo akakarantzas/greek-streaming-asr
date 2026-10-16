@@ -8,3 +8,7 @@ dependencies = []
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 pythonpath = ["."]
+
+[tool.ruff.lint]
+# Only correctness checks (unused imports/variables, undefined names, syntax errors).
+select = ["F", "E9"]
