@@ -5,7 +5,7 @@ import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from src.asr.infer import _build_transcribe_call
 from src.profiling.stats import mean as _mean
@@ -105,7 +105,7 @@ def profile_inference(
 def concurrency_test(
     model: Any,
     audio_inputs: list,
-    stream_counts: list[int] = [1, 2, 4, 8],
+    stream_counts: Sequence[int] = (1, 2, 4, 8),
     target_lang: str | None = None,
 ) -> list[dict]:
     if not stream_counts:
