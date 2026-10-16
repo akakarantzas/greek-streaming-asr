@@ -209,6 +209,38 @@ def test_profile_inference_uses_transcribe_adapter_with_target_lang(monkeypatch)
     assert result["per_input_latencies_ms"] == pytest.approx([250.0])
 
 
+def test_concurrency_test_reports_peak_memory_per_stream_count(monkeypatch) -> None:
+    peaks = iter([100.0, 250.0, 400.0])
+    runs: list[int] = []
+
+    def fake_run(model, audio_inputs, stream_count, target_lang=None):
+        runs.append(stream_count)
+        return [10.0 * stream_count]
+
+    monkeypatch.setattr(gpu_metrics, "_run_concurrent_streams", fake_run)
+    monkeypatch.setattr(gpu_metrics, "_reset_peak_memory", lambda: None)
+    monkeypatch.setattr(gpu_metrics, "_peak_memory_allocated_mb", lambda: next(peaks))
+
+    results = gpu_metrics.concurrency_test(
+        model=object(),
+        audio_inputs=["a"],
+        stream_counts=(1, 2, 4),
+    )
+
+    assert runs == [1, 2, 4]
+    assert [item["max_memory_allocated_mb"] for item in results] == [100.0, 250.0, 400.0]
+
+
+def test_peak_memory_is_none_without_cuda(monkeypatch) -> None:
+    import sys
+    import types
+
+    fake_torch = types.SimpleNamespace(cuda=types.SimpleNamespace(is_available=lambda: False))
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+
+    assert gpu_metrics._peak_memory_allocated_mb() is None
+
+
 @contextmanager
 def _workspace_temp_dir():
     with tempfile.TemporaryDirectory(

@@ -119,35 +119,56 @@ def concurrency_test(
         "May not represent independent production streams.",
         "Uses the same loaded model across threads; if the model is not thread-safe, results are invalid.",
     ]
-    baseline_latencies = _run_concurrent_streams(
-        model=model,
-        audio_inputs=audio_inputs,
-        stream_count=1,
-        target_lang=target_lang,
-    )
+
+    def run_measured(stream_count: int) -> tuple[list[float], float | None]:
+        _reset_peak_memory()
+        run_latencies = _run_concurrent_streams(
+            model=model,
+            audio_inputs=audio_inputs,
+            stream_count=stream_count,
+            target_lang=target_lang,
+        )
+        return run_latencies, _peak_memory_allocated_mb()
+
+    baseline_latencies, baseline_peak_mb = run_measured(1)
     baseline_p95 = _percentile(baseline_latencies, 95)
 
     results: list[dict] = []
     for stream_count in stream_counts:
-        latencies = (
-            baseline_latencies
+        latencies, peak_memory_mb = (
+            (baseline_latencies, baseline_peak_mb)
             if stream_count == 1
-            else _run_concurrent_streams(
-                model=model,
-                audio_inputs=audio_inputs,
-                stream_count=stream_count,
-                target_lang=target_lang,
-            )
+            else run_measured(stream_count)
         )
         summary = _concurrency_summary_from_latencies(
             stream_count=stream_count,
             latencies_ms=latencies,
             baseline_p95_latency_ms=baseline_p95,
-            max_memory_allocated_mb=snapshot().get("memory_allocated_mb"),
+            max_memory_allocated_mb=peak_memory_mb,
         )
         summary["limitations"] = limitations
         results.append(summary)
     return results
+
+
+def _reset_peak_memory() -> None:
+    try:
+        import torch
+    except ImportError:
+        return
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+
+
+def _peak_memory_allocated_mb() -> float | None:
+    """Peak CUDA memory allocated since the last reset, or None without CUDA."""
+    try:
+        import torch
+    except ImportError:
+        return None
+    if not torch.cuda.is_available():
+        return None
+    return _bytes_to_mb(torch.cuda.max_memory_allocated())
 
 
 def _torch_snapshot() -> dict:
