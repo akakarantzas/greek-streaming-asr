@@ -12,6 +12,7 @@ from src.asr.model_loader import (
     DEFAULT_MODEL_ID,
     get_gpu_memory_allocated_mb,
     load_model,
+    resolve_device,
 )
 
 
@@ -25,8 +26,9 @@ def run_single_file_inference(
     model_id_or_path: str,
     output_path: str | None = None,
     target_lang: str = "el-GR",
-    device: str = "cuda",
+    device: str = "auto",
 ) -> dict:
+    device = resolve_device(device)
     audio_file = _validate_audio_path(audio_path)
     _validate_target_lang(target_lang)
 
@@ -108,8 +110,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--device",
-        default="cuda",
-        help='Target device for loading, usually "cuda" or "cpu".',
+        default="auto",
+        help='Target device: "auto" (cuda if available, else cpu), "cuda", or "cpu".',
     )
     return parser
 

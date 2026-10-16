@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.asr.model_loader import DEFAULT_MODEL_ID, load_model  # noqa: E402
+from src.asr.model_loader import DEFAULT_MODEL_ID, load_model, resolve_device  # noqa: E402
 from src.eval.manifest import load_jsonl_manifest  # noqa: E402
 from src.profiling.gpu_metrics import concurrency_test, profile_inference, snapshot  # noqa: E402
 
@@ -38,7 +38,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Target language hint. Use el-GR for Greek.",
     )
     parser.add_argument("--output-dir", required=True, help="Directory for benchmark JSON files.")
-    parser.add_argument("--device", default="cuda", help='Target device, usually "cuda" or "cpu".')
+    parser.add_argument(
+        "--device",
+        default="auto",
+        help='Target device: "auto" (cuda if available, else cpu), "cuda", or "cpu".',
+    )
     parser.add_argument(
         "--stream-counts",
         default="1,2,4,8",
@@ -61,7 +65,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         audio_inputs = [row["audio_filepath"] for row in manifest_rows]
 
         gpu_snapshots = [snapshot()]
-        model = load_model(model_id_or_path=args.model_id_or_path, device=args.device)
+        device = resolve_device(args.device)
+        model = load_model(model_id_or_path=args.model_id_or_path, device=device)
         profile_summary = profile_inference(
             model=model,
             audio_inputs=audio_inputs,

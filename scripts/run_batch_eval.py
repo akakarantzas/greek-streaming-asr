@@ -17,7 +17,13 @@ from src.asr.infer import (
     _build_transcribe_call,
     extract_transcript_text,
 )
-from src.asr.model_loader import DEFAULT_MODEL_ID, get_gpu_memory_allocated_mb, load_model
+from src.asr.model_loader import (
+    DEFAULT_MODEL_ID,
+    get_gpu_memory_allocated_mb,
+    get_gpu_name,
+    load_model,
+    resolve_device,
+)
 from src.eval.cer import compute_cer
 from src.eval.manifest import load_jsonl_manifest
 from src.eval.wer import compute_wer
@@ -59,8 +65,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--device",
-        default="cuda",
-        help='Target device for loading, usually "cuda" or "cpu".',
+        default="auto",
+        help='Target device: "auto" (cuda if available, else cpu), "cuda", or "cpu".',
     )
     parser.add_argument(
         "--validate-files",
@@ -85,11 +91,12 @@ def run_batch_eval(
     target_lang: str,
     output: str,
     summary_output: str | None = None,
-    device: str = "cuda",
+    device: str = "auto",
     validate_files: bool = True,
     inference_fn: Callable[[dict], dict] | None = None,
 ) -> dict:
     _validate_language_target(language, target_lang)
+    device = resolve_device(device)
     manifest_rows = load_jsonl_manifest(manifest_path, validate_files=validate_files)
     language_readiness, readiness_warnings = language_readiness_for(language)
 
@@ -139,6 +146,8 @@ def run_batch_eval(
         manifest_path=manifest_path,
         warnings=warnings,
     )
+    summary["device"] = device
+    summary["gpu_name"] = get_gpu_name()
     _attach_metric_to_rows(per_file_rows, summary)
 
     output_path = Path(output)

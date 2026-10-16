@@ -12,7 +12,7 @@ def test_argument_parser_defaults() -> None:
     args = parser.parse_args([])
 
     assert args.model_id_or_path == DEFAULT_MODEL_ID
-    assert args.device == "cuda"
+    assert args.device == "auto"
     assert args.revision is None
 
 

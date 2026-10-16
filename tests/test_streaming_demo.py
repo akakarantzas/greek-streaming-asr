@@ -20,7 +20,7 @@ def test_parser_defaults() -> None:
     assert args.inference_window_ms == 1000
     assert args.language == "el"
     assert args.target_lang == "el-GR"
-    assert args.device == "cuda"
+    assert args.device == "auto"
     assert args.max_seconds is None
 
 

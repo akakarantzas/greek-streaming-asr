@@ -11,7 +11,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.asr.model_loader import DEFAULT_MODEL_ID, load_model  # noqa: E402
+from src.asr.model_loader import (  # noqa: E402
+    DEFAULT_MODEL_ID,
+    get_gpu_name,
+    load_model,
+    resolve_device,
+)
 from src.asr.streaming_asr import ChunkedASRSession  # noqa: E402
 from src.audio.microphone import DEFAULT_SAMPLE_RATE, MicrophoneAudioStream  # noqa: E402
 from src.profiling.stats import mean as _mean  # noqa: E402
@@ -57,8 +62,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--device",
-        default="cuda",
-        help='Target device for loading, usually "cuda" or "cpu".',
+        default="auto",
+        help='Target device: "auto" (cuda if available, else cpu), "cuda", or "cpu".',
     )
     parser.add_argument(
         "--max-seconds",
@@ -74,7 +79,8 @@ def run_demo(args: argparse.Namespace) -> int:
     chunk_samples = chunk_ms_to_samples(args.chunk_ms, DEFAULT_SAMPLE_RATE)
     inference_window_s = args.inference_window_ms / 1000
 
-    model = load_model(model_id_or_path=args.model_id_or_path, device=args.device)
+    device = resolve_device(args.device)
+    model = load_model(model_id_or_path=args.model_id_or_path, device=device)
     session = ChunkedASRSession(
         model=model,
         sample_rate=DEFAULT_SAMPLE_RATE,
@@ -90,7 +96,7 @@ def run_demo(args: argparse.Namespace) -> int:
         language=args.language,
         language_readiness=session.language_readiness,
         readiness_warnings=session.session_warnings,
-        device=args.device,
+        device=device,
         gpu_name=get_gpu_name(),
         mode=session.mode,
     )
@@ -183,16 +189,6 @@ def chunk_ms_to_samples(chunk_ms: int, sample_rate: int) -> int:
     if chunk_ms <= 0:
         raise ValueError("--chunk-ms must be positive")
     return max(1, int(sample_rate * (chunk_ms / 1000)))
-
-
-def get_gpu_name() -> str | None:
-    try:
-        import torch
-    except ImportError:
-        return None
-    if not torch.cuda.is_available():
-        return None
-    return str(torch.cuda.get_device_name(0))
 
 
 def main(argv: Sequence[str] | None = None) -> int:

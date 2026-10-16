@@ -21,6 +21,7 @@ from src.asr.model_loader import (  # noqa: E402
     DEFAULT_MODEL_ID,
     get_gpu_memory_allocated_mb,
     load_model,
+    resolve_device,
 )
 
 
@@ -35,8 +36,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--device",
-        default="cuda",
-        help='Target device for loading, usually "cuda" or "cpu".',
+        default="auto",
+        help='Target device: "auto" (cuda if available, else cpu), "cuda", or "cpu".',
     )
     parser.add_argument(
         "--revision",
@@ -84,7 +85,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     print(f"Selected model ID/path: {args.model_id_or_path}")
-    print(f"Selected device: {args.device}")
+    device = resolve_device(args.device)
+    print(f"Selected device: {device}")
     if args.revision:
         print(f"Selected revision: {args.revision}")
 
@@ -96,7 +98,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         model = load_model(
             model_id_or_path=args.model_id_or_path,
-            device=args.device,
+            device=device,
             revision=args.revision,
         )
     except Exception as exc:

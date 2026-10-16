@@ -14,6 +14,8 @@ from src.asr.model_loader import (
     _validate_local_nemo_path,
     format_bytes_as_gb,
     get_gpu_memory_allocated_mb,
+    get_gpu_name,
+    resolve_device,
 )
 
 
@@ -96,3 +98,31 @@ def test_gpu_memory_is_reported_in_mb_when_cuda_is_available(monkeypatch: pytest
     monkeypatch.setitem(sys.modules, "torch", types.SimpleNamespace(cuda=fake_cuda))
 
     assert get_gpu_memory_allocated_mb() == 5.0
+
+
+def test_resolve_device_passes_explicit_values_through() -> None:
+    assert resolve_device("cpu") == "cpu"
+    assert resolve_device("cuda") == "cuda"
+
+
+def test_resolve_device_auto_uses_cuda_when_available(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_torch = types.SimpleNamespace(cuda=types.SimpleNamespace(is_available=lambda: True))
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+
+    assert resolve_device("auto") == "cuda"
+
+
+def test_resolve_device_auto_falls_back_to_cpu(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_torch = types.SimpleNamespace(cuda=types.SimpleNamespace(is_available=lambda: False))
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+    assert resolve_device("auto") == "cpu"
+
+    monkeypatch.setitem(sys.modules, "torch", None)
+    assert resolve_device("auto") == "cpu"
+
+
+def test_get_gpu_name_is_none_without_cuda(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_torch = types.SimpleNamespace(cuda=types.SimpleNamespace(is_available=lambda: False))
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+
+    assert get_gpu_name() is None

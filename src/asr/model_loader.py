@@ -26,9 +26,33 @@ def get_gpu_memory_allocated_mb() -> float | None:
     return float(torch.cuda.memory_allocated() / 1024**2)
 
 
+def resolve_device(device: str = "auto") -> str:
+    """Turn "auto" into "cuda" when CUDA is available, else "cpu". Other values pass through."""
+    if device != "auto":
+        return device
+    try:
+        import torch
+    except ImportError:
+        resolved = "cpu"
+    else:
+        resolved = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Device auto-detected: {resolved}")
+    return resolved
+
+
+def get_gpu_name() -> str | None:
+    try:
+        import torch
+    except ImportError:
+        return None
+    if not torch.cuda.is_available():
+        return None
+    return str(torch.cuda.get_device_name(0))
+
+
 def load_model(
     model_id_or_path: str = DEFAULT_MODEL_ID,
-    device: str = "cuda",
+    device: str = "auto",
     revision: str | None = None,
 ) -> Any:
     print(f"Loading ASR model: {model_id_or_path}")
@@ -43,6 +67,8 @@ def load_model(
             "Could not import NVIDIA NeMo ASR and PyTorch. Check that NeMo, PyTorch, "
             "and their CUDA-compatible dependencies are installed in the active environment."
         ) from exc
+
+    device = resolve_device(device)
 
     if device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError(
