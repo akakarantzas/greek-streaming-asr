@@ -21,6 +21,8 @@ Planned summary JSON fields:
 - `language`
 - `manifest_path`
 - `num_files`
+- `device` (resolved: `cuda` or `cpu`)
+- `gpu_name` (null on CPU)
 - `wer` (accents counted, headline)
 - `wer_no_accents`
 - `cer`

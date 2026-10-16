@@ -2,7 +2,7 @@
 
 Status: Pre-baseline (scaffolding done; hardware results not yet recorded)
 
-Hardware: NVIDIA DGX Spark
+Hardware: NVIDIA DGX Spark (target); RTX 4060 Ti on Windows for development (unverified)
 
 Target model: NVIDIA Nemotron 3.5 ASR
 

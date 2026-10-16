@@ -6,7 +6,7 @@ A benchmark and evaluation toolkit for NVIDIA Nemotron 3.5 ASR, focused on Greek
 
 Target model: `nvidia/nemotron-3.5-asr-streaming-0.6b`
 
-Target hardware: NVIDIA DGX Spark. Other CUDA systems are unverified.
+Target hardware: NVIDIA DGX Spark. Development also happens on a consumer NVIDIA GPU (RTX 4060 Ti) and on CPU; none of these setups are verified yet. Each batch evaluation records the device and GPU it ran on.
 
 Status: pre-baseline. Environment checks and pipeline scaffolding are present; model revision, hardware results, and fine-tuning results are not yet recorded.
 
@@ -32,7 +32,8 @@ Detailed milestones are in `docs/milestone_checklist.md`.
 ## Requirements
 
 - Python 3.10+
-- NVIDIA GPU with CUDA support
+- NVIDIA GPU with CUDA support (recommended). Scripts default to `--device auto`, which falls back to CPU when CUDA is unavailable; CPU runs are slow.
+- NeMo is Linux-first; on Windows, WSL2 is the likely route (not yet tested here)
 - CUDA: TBD
 - PyTorch: TBD
 - NVIDIA NeMo: TBD
@@ -151,7 +152,7 @@ Benchmark results depend on hardware, audio format, model revision, batch size, 
 
 ## Results
 
-No benchmark results are published yet. Results will be added after model revision, environment versions, audio validation, and DGX Spark baselines are finalized.
+No benchmark results are published yet. Results will be added after model revision, environment versions, audio validation, and baselines on the target hardware are finalized.
 
 ## Fine-Tuning
 
