@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import argparse
-import inspect
 import json
 import sys
 import time
 from pathlib import Path
 from typing import Any, Sequence
 
+from src.asr.introspection import call_accepts_parameter, call_has_named_parameter
 from src.asr.model_loader import (
     DEFAULT_MODEL_ID,
     get_gpu_memory_allocated_mb,
@@ -199,15 +199,15 @@ def _build_transcribe_call(
     args: list[Any] = []
 
     audio_values = [str(audio_file)]
-    if _call_has_named_parameter(transcribe, "audio"):
+    if call_has_named_parameter(transcribe, "audio"):
         kwargs["audio"] = audio_values
-    elif _call_has_named_parameter(transcribe, "paths2audio_files"):
+    elif call_has_named_parameter(transcribe, "paths2audio_files"):
         kwargs["paths2audio_files"] = audio_values
     else:
         args.append(audio_values)
 
     target_lang_support = False
-    if _call_accepts_parameter(transcribe, "target_lang"):
+    if call_accepts_parameter(transcribe, "target_lang"):
         kwargs["target_lang"] = target_lang
         target_lang_support = True
     else:
@@ -217,28 +217,6 @@ def _build_transcribe_call(
         )
 
     return _TranscribeCall(args=args, kwargs=kwargs), target_lang_support
-
-
-def _call_accepts_parameter(callable_obj: Any, parameter_name: str) -> bool:
-    try:
-        signature = inspect.signature(callable_obj)
-    except (TypeError, ValueError):
-        return False
-
-    if parameter_name in signature.parameters:
-        return True
-    return any(
-        parameter.kind is inspect.Parameter.VAR_KEYWORD
-        for parameter in signature.parameters.values()
-    )
-
-
-def _call_has_named_parameter(callable_obj: Any, parameter_name: str) -> bool:
-    try:
-        signature = inspect.signature(callable_obj)
-    except (TypeError, ValueError):
-        return False
-    return parameter_name in signature.parameters
 
 
 if __name__ == "__main__":

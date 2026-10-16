@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 import tempfile
 import time
 from datetime import datetime, timezone
@@ -14,6 +13,7 @@ from src.asr.infer import (
     _build_transcribe_call,
     extract_transcript_text,
 )
+from src.asr.introspection import call_accepts_parameter
 from src.audio.microphone import DEFAULT_SAMPLE_RATE
 
 
@@ -146,9 +146,9 @@ class ChunkedASRSession:
             return None
 
         kwargs: dict[str, Any] = {}
-        if _call_accepts_parameter(streaming_method, "target_lang"):
+        if call_accepts_parameter(streaming_method, "target_lang"):
             kwargs["target_lang"] = self.target_lang
-        if _call_accepts_parameter(streaming_method, "sample_rate"):
+        if call_accepts_parameter(streaming_method, "sample_rate"):
             kwargs["sample_rate"] = self.sample_rate
         return extract_transcript_text(streaming_method(audio, **kwargs))
 
@@ -161,11 +161,11 @@ class ChunkedASRSession:
                 "3.5 ASR streaming API before running microphone ASR."
             )
 
-        if _call_accepts_parameter(transcribe, "audio"):
+        if call_accepts_parameter(transcribe, "audio"):
             kwargs: dict[str, Any] = {"audio": [audio]}
-            if _call_accepts_parameter(transcribe, "sample_rate"):
+            if call_accepts_parameter(transcribe, "sample_rate"):
                 kwargs["sample_rate"] = self.sample_rate
-            if _call_accepts_parameter(transcribe, "target_lang"):
+            if call_accepts_parameter(transcribe, "target_lang"):
                 kwargs["target_lang"] = self.target_lang
             else:
                 warnings.append(
@@ -249,20 +249,6 @@ def _language_readiness(target_lang: str) -> tuple[str, list[str]]:
             ],
         )
     return "auto", []
-
-
-def _call_accepts_parameter(callable_obj: Any, parameter_name: str) -> bool:
-    try:
-        signature = inspect.signature(callable_obj)
-    except (TypeError, ValueError):
-        return False
-
-    if parameter_name in signature.parameters:
-        return True
-    return any(
-        parameter.kind is inspect.Parameter.VAR_KEYWORD
-        for parameter in signature.parameters.values()
-    )
 
 
 def _utc_timestamp() -> str:

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import inspect
 from pathlib import Path
 from typing import Any
+
+from src.asr.introspection import call_has_named_parameter
 
 
 DEFAULT_MODEL_ID = "nvidia/nemotron-3.5-asr-streaming-0.6b"
@@ -73,7 +74,7 @@ def load_model(
             "map_location": torch_device,
         }
         if revision is not None:
-            if _call_accepts_parameter(ASRModel.from_pretrained, "revision"):
+            if call_has_named_parameter(ASRModel.from_pretrained, "revision"):
                 pretrained_kwargs["revision"] = revision
             else:
                 raise RuntimeError(
@@ -126,11 +127,3 @@ def _validate_local_nemo_path(model_id_or_path: str) -> Path:
     if not path.is_file():
         raise ValueError(f"Local NeMo checkpoint must be a file: {path}")
     return path
-
-
-def _call_accepts_parameter(callable_obj: Any, parameter_name: str) -> bool:
-    try:
-        signature = inspect.signature(callable_obj)
-    except (TypeError, ValueError):
-        return False
-    return parameter_name in signature.parameters
