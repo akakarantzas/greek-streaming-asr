@@ -64,6 +64,8 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+Optional packages that nothing imports yet (experiment tracking, serving, notebooks) are in `requirements-extras.txt`.
+
 ## Supported Languages
 
 - Greek: baseline evaluation and fine-tuning scaffolding in progress with WER
@@ -99,9 +101,10 @@ python scripts/profile_inference.py --manifest data/manifests/el.jsonl --languag
 python scripts/make_benchmark_plots.py --input-dir experiments/baseline/profile_el --output-dir reports/figures
 ```
 
-Run tests:
+Run tests (no GPU needed; `requirements-test.txt` is enough, and CI uses it on Python 3.10 and 3.12):
 
 ```bash
+python -m pip install -r requirements-test.txt
 pytest
 ```
 

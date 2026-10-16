@@ -1,0 +1,6 @@
+# Minimal dependencies to run the test suite without a GPU (used by CI).
+# The heavy ML stack (torch, NeMo) is not needed.
+pytest
+jiwer
+numpy
+pandas

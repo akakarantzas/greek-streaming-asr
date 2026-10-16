@@ -7,12 +7,16 @@ on:
 jobs:
   pytest:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
           cache: pip
+          cache-dependency-path: requirements-test.txt
       # Tests run without a GPU; the heavy ML stack (torch, NeMo) is not needed.
-      - run: python -m pip install pytest jiwer numpy pandas
+      - run: python -m pip install -r requirements-test.txt
       - run: python -m pytest -q

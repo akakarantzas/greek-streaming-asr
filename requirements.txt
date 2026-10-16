@@ -1,5 +1,6 @@
 # Core ML
 # Select PyTorch CUDA and NVIDIA NeMo versions according to the DGX Spark CUDA environment.
+# Versions are intentionally unpinned until the target environment is confirmed.
 torch
 torchaudio
 nemo_toolkit[asr]
@@ -9,28 +10,13 @@ huggingface_hub
 sounddevice
 soundfile
 numpy
-librosa
-ffmpeg-python
 
 # Evaluation
 jiwer
 pandas
 
-# Profiling and experiment tracking
-psutil
-pynvml
-wandb
-mlflow
-
-# Serving, optional later
-fastapi
-uvicorn
-websockets
-
-# Plotting and notebooks
+# Plotting
 matplotlib
-notebook
-ipykernel
 
 # Testing
 pytest
