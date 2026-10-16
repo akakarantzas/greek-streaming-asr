@@ -202,6 +202,7 @@ def build_summary(
             references, hypotheses, strip_accents=True
         )["wer"]
     elif language == "yue":
+        # Planned Cantonese hook: not reachable from the CLI while LANGUAGE_CHOICES is Greek-only.
         metric = compute_cer(references, hypotheses)
         metric_name = "cer"
         metric_value = metric["cer"]

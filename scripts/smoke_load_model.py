@@ -99,9 +99,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             device=args.device,
             revision=args.revision,
         )
-    except (RuntimeError, ImportError) as exc:
-        print(build_troubleshooting_message(exc), file=sys.stderr)
-        return 1
     except Exception as exc:
         print(build_troubleshooting_message(exc), file=sys.stderr)
         return 1
