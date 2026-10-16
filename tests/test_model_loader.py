@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import sys
 import tempfile
+import types
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -11,6 +13,7 @@ from src.asr.model_loader import (
     _looks_like_local_nemo_path,
     _validate_local_nemo_path,
     format_bytes_as_gb,
+    get_gpu_memory_allocated_mb,
 )
 
 
@@ -70,3 +73,26 @@ def _workspace_temp_dir():
         dir=Path.cwd() / "tests",
     ) as temp_dir:
         yield Path(temp_dir)
+
+
+def test_gpu_memory_is_none_when_torch_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(sys.modules, "torch", None)
+
+    assert get_gpu_memory_allocated_mb() is None
+
+
+def test_gpu_memory_is_none_when_cuda_is_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_torch = types.SimpleNamespace(cuda=types.SimpleNamespace(is_available=lambda: False))
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+
+    assert get_gpu_memory_allocated_mb() is None
+
+
+def test_gpu_memory_is_reported_in_mb_when_cuda_is_available(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_cuda = types.SimpleNamespace(
+        is_available=lambda: True,
+        memory_allocated=lambda: 5 * 1024**2,
+    )
+    monkeypatch.setitem(sys.modules, "torch", types.SimpleNamespace(cuda=fake_cuda))
+
+    assert get_gpu_memory_allocated_mb() == 5.0

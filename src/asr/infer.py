@@ -73,7 +73,8 @@ def run_single_file_inference(
     print(f"Audio file path: {audio_file}")
     print(f"Transcript text: {transcript}")
     print(f"latency_ms: {latency_ms:.2f}")
-    print(f"gpu_memory_allocated_mb after inference: {gpu_memory_allocated_mb:.2f}")
+    if gpu_memory_allocated_mb is not None:
+        print(f"gpu_memory_allocated_mb after inference: {gpu_memory_allocated_mb:.2f}")
 
     result_output_path.parent.mkdir(parents=True, exist_ok=True)
     result_output_path.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
