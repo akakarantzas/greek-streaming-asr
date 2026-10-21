@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nemotron 3.5 ASR · Greek demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32">
+          <rect x="5" y="12" width="3" height="8" rx="1.5"/>
+          <rect x="10.5" y="7" width="3" height="18" rx="1.5"/>
+          <rect x="16" y="10" width="3" height="12" rx="1.5"/>
+          <rect x="21.5" y="5" width="3" height="22" rx="1.5"/>
+          <rect x="27" y="13" width="3" height="6" rx="1.5"/>
+        </svg>
+      </div>
+      <h1>Nemotron <span class="accent">3.5 ASR</span></h1>
+      <p class="subtitle">Real-time streaming recognition · base vs. fine-tuned, side by side</p>
+      <div class="status" id="status" data-state="pending" role="status">
+        <span class="dot"></span><span id="status-text">connecting…</span>
+      </div>
+    </header>
+
+    <section class="console" aria-label="Streaming comparison">
+      <div class="controls">
+        <label class="label" for="language">Language</label>
+        <div class="select-wrap">
+          <select id="language">
+            <option value="el-GR">Greek ★ fine-tuned (el-GR)</option>
+          </select>
+        </div>
+        <button id="mic-btn" class="btn btn-primary" type="button" aria-pressed="false">
+          <svg class="btn-icon icon-mic" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="9" y="3" width="6" height="11" rx="3"/>
+            <path d="M6 11a6 6 0 0 0 12 0M12 17v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg class="btn-icon icon-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>
+          <span id="mic-label">live mic</span>
+        </button>
+        <span class="or">or</span>
+        <button id="clip-btn" class="btn btn-ghost" type="button">
+          <span aria-hidden="true">🎲</span> random
+          <svg class="flag" viewBox="0 0 27 18" aria-hidden="true">
+            <rect width="27" height="18" fill="#0d5eaf"/>
+            <g fill="#fff"><rect y="2" width="27" height="2"/><rect y="6" width="27" height="2"/><rect y="10" width="27" height="2"/><rect y="14" width="27" height="2"/></g>
+            <rect width="10" height="10" fill="#0d5eaf"/>
+            <g fill="#fff"><rect x="4" width="2" height="10"/><rect y="4" width="10" height="2"/></g>
+          </svg>
+          Greek clip
+        </button>
+        <span class="clip-count" id="clip-count"></span>
+      </div>
+
+      <div class="reference" id="reference" hidden>
+        <span class="reference-label">Reference</span>
+        <span id="reference-text" lang="el"></span>
+      </div>
+
+      <div class="panels">
+        <article class="panel" id="panel-base" data-model="base">
+          <header class="panel-head">
+            <span class="panel-title">Base — Nemotron Multilingual 0.6B</span>
+            <span class="panel-meta"><span class="wer-badge" hidden></span><span class="step"></span></span>
+          </header>
+          <p class="transcript" lang="el"></p>
+          <div class="best-banner" hidden></div>
+        </article>
+
+        <article class="panel" id="panel-finetuned" data-model="finetuned">
+          <header class="panel-head">
+            <span class="panel-title">Fine-tuned — Greek</span>
+            <span class="panel-meta"><span class="wer-badge" hidden></span><span class="step"></span></span>
+          </header>
+          <p class="transcript" lang="el"></p>
+          <div class="best-banner" hidden></div>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footnote">
+      Fine-tuned on Greek · cache-aware streaming, 0 ms look-ahead. Speak into the mic or play a held-out FLEURS sample clip.
+    </footer>
+  </main>
+
+  <script src="mock-source.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

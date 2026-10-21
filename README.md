@@ -127,6 +127,14 @@ python -m pip install -r requirements-test.txt
 pytest
 ```
 
+Preview the comparison demo page (base vs. fine-tuned, side by side). It currently runs on a mock data source with invented Greek sentences, so no server, model, or GPU is needed:
+
+```bash
+python -m http.server 8765 --bind 127.0.0.1 --directory src/app/static
+```
+
+Then open http://localhost:8765.
+
 ## Data
 
 Evaluation manifests are JSONL files:
@@ -162,6 +170,7 @@ Greek fine-tuning support is scaffolding only. Cantonese (Yue) exploration and a
 
 ```text
 src/             Core ASR, audio, evaluation, and profiling code
+src/app/static/  Comparison demo page (mock data for now)
 scripts/         CLI entry points
 data/            Manifests and sample placeholders
 experiments/     Baseline and fine-tuning outputs
