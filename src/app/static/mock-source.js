@@ -119,7 +119,7 @@
     }
 
     function clips() {
-      return Promise.resolve(CLIPS.map((clip) => ({ id: clip.id, language: "el-GR" })));
+      return Promise.resolve(CLIPS.map((clip) => ({ id: clip.id, language: "el-GR", mock: true })));
     }
 
     function pickClip() {

@@ -186,7 +186,9 @@
 
   resetPanels(true);
   source.health().then(renderStatus, () => renderStatus(null));
+  // Mock clips are scripted sentences with no audio, so they are not counted.
   source.clips().then((list) => {
-    els.clipCount.textContent = `(${list.length} clips)`;
+    const real = list.filter((clip) => !clip.mock);
+    els.clipCount.textContent = real.length ? `(${real.length} clips)` : "";
   });
 })();
