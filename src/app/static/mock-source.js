@@ -67,12 +67,6 @@
     },
   ];
 
-  // What the mock "hears" in live-mic mode.
-  const MIC_HYPOTHESES = {
-    base: "Θα σας δείξω τώρα μία σύγκριση του βασικού και του εκπαιδευμένου μοντέλο.",
-    finetuned: "Θα σας δείξω τώρα μια σύγκριση του βασικού και του εκπαιδευμένου μοντέλου.",
-  };
-
   function normalizeWords(text) {
     return text
       .toLowerCase()
@@ -146,12 +140,15 @@
       clearTimer();
       const mode = options.mode;
       const clip = mode === "clip" ? pickClip() : null;
-      const hypotheses = clip ? clip.hypotheses : MIC_HYPOTHESES;
+      // The mock cannot recognize speech, so live-mic sessions get empty
+      // transcripts; only clips have scripted hypotheses.
       const schedules = {};
       let lastWordAt = 0;
       for (const model of MODELS) {
-        schedules[model] = revealTimes(hypotheses[model], MODEL_LAG_S[model]);
-        lastWordAt = Math.max(lastWordAt, schedules[model][schedules[model].length - 1].at);
+        schedules[model] = clip ? revealTimes(clip.hypotheses[model], MODEL_LAG_S[model]) : [];
+        for (const entry of schedules[model]) {
+          lastWordAt = Math.max(lastWordAt, entry.at);
+        }
       }
       const totalSteps = Math.ceil(((lastWordAt + 0.5) * 1000) / FRAME_MS);
 
@@ -166,7 +163,7 @@
         for (const model of MODELS) {
           onEvent({ type: "partial", model, text: textAt(schedules[model], seconds), step: session.step });
         }
-        // Clips end on their own; the mic keeps "listening" until stop().
+        // Clips end on their own; the mic keeps listening until stop().
         if (clip && session.step >= totalSteps) {
           finish();
         }

@@ -36,6 +36,21 @@
 
   let mode = null; // "mic" | "clip" | null
   let finals = {};
+  let micStream = null;
+
+  function releaseMic() {
+    if (micStream) {
+      for (const track of micStream.getTracks()) track.stop();
+      micStream = null;
+    }
+  }
+
+  function showPanelMessage(message) {
+    for (const panel of Object.values(panels)) {
+      panel.transcript.textContent = message;
+      panel.transcript.classList.add("placeholder");
+    }
+  }
 
   function werLevel(wer) {
     if (wer < 0.15) return "good";
@@ -129,6 +144,7 @@
       }
       case "end":
         mode = null;
+        releaseMic();
         setMicActive(false);
         markBest();
         break;
@@ -136,6 +152,7 @@
   }
 
   function startSession(nextMode) {
+    if (nextMode !== "mic") releaseMic();
     mode = nextMode;
     finals = {};
     setMicActive(nextMode === "mic");
@@ -144,11 +161,24 @@
     source.start({ mode: nextMode, targetLang: els.language.value }, handleEvent);
   }
 
+  // The stream is captured now so the browser asks for permission; sending
+  // its audio to the server comes with the real source.
+  async function startMic() {
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (error) {
+      resetPanels(false);
+      showPanelMessage("Microphone access was blocked or no microphone was found.");
+      return;
+    }
+    startSession("mic");
+  }
+
   els.micBtn.addEventListener("click", () => {
     if (mode === "mic") {
       source.stop();
     } else {
-      startSession("mic");
+      startMic();
     }
   });
 
