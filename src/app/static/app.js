@@ -73,6 +73,9 @@
     let text = hasFinetuned ? "server ok · base + finetuned" : "server ok · base only";
     if (health.mock) text += " · mock";
     els.statusText.textContent = text;
+    // The star claims a fine-tuned model exists, so a mock one does not count.
+    const greek = els.language.querySelector('option[value="el-GR"]');
+    greek.textContent = hasFinetuned && !health.mock ? "Greek ★ fine-tuned (el-GR)" : "Greek (el-GR)";
   }
 
   function renderTranscript(panel, text, streaming) {
