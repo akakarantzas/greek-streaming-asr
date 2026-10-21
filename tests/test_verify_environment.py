@@ -18,12 +18,12 @@ SPEC.loader.exec_module(verify_environment)
 
 class VerifyEnvironmentTests(unittest.TestCase):
     def test_python_version_check_passes_for_supported_version(self) -> None:
-        check = verify_environment.check_python_version((3, 10, 0))
+        check = verify_environment.check_python_version((3, 11, 0))
 
         self.assertEqual(check.status, "PASS")
 
     def test_python_version_check_fails_for_old_version(self) -> None:
-        check = verify_environment.check_python_version((3, 9, 18))
+        check = verify_environment.check_python_version((3, 10, 12))
 
         self.assertEqual(check.status, "FAIL")
         self.assertIn("too old", check.reason)

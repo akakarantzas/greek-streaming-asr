@@ -31,7 +31,7 @@ Detailed milestones are in `docs/milestone_checklist.md`.
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.11+
 - NVIDIA GPU with CUDA support (recommended). Scripts default to `--device auto`, which falls back to CPU when CUDA is unavailable; CPU runs are slow.
 - NeMo is Linux-first; on Windows, WSL2 is the likely route (not yet tested here)
 - CUDA: TBD
@@ -120,7 +120,7 @@ Validate fine-tuning inputs (does not start training):
 python experiments/finetuning/validate_finetuning_inputs.py --config experiments/finetuning/greek_finetune_config_template.json
 ```
 
-Run tests (no GPU needed; `requirements-test.txt` is enough, and CI uses it on Python 3.10 and 3.12):
+Run tests (no GPU needed; `requirements-test.txt` is enough, and CI uses it on Python 3.11 and 3.12):
 
 ```bash
 python -m pip install -r requirements-test.txt

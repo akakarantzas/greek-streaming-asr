@@ -18,7 +18,7 @@ from types import ModuleType
 from typing import Any, Callable, Iterable
 
 
-MIN_PYTHON = (3, 10)
+MIN_PYTHON = (3, 11)
 
 PACKAGE_SPECS = (
     ("torch", "torch"),
