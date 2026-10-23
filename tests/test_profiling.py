@@ -4,6 +4,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import time
 import types
 from contextlib import contextmanager
 from pathlib import Path
@@ -144,12 +145,20 @@ def test_concurrency_summary_marks_not_degraded_when_under_threshold() -> None:
     assert summary["degradation_reason"] is None
 
 
-def test_profile_inference_uses_fake_model_without_profiler(monkeypatch) -> None:
-    calls: list[str] = []
-    times = iter([1.0, 1.1, 2.0, 2.3])
+def test_profile_inference_uses_transcribe_on_callable_model(monkeypatch) -> None:
+    # A torch model is callable (forward) and has transcribe(); profiling must use transcribe().
+    class CallableModel:
+        def __init__(self) -> None:
+            self.calls: list[tuple[list[str], str]] = []
 
-    def fake_model(audio_input):
-        calls.append(audio_input)
+        def __call__(self, *_args, **_kwargs):
+            raise AssertionError("profiling called the model's forward() instead of transcribe()")
+
+        def transcribe(self, audio, target_lang=None):
+            self.calls.append((audio, target_lang))
+            return ["transcript"]
+
+    times = iter([1.0, 1.1, 2.0, 2.3])
 
     def fake_snapshot():
         return {
@@ -157,24 +166,25 @@ def test_profile_inference_uses_fake_model_without_profiler(monkeypatch) -> None
             "gpu_utilization_pct": 25.0,
         }
 
-    monkeypatch.setattr(gpu_metrics.time, "perf_counter", lambda: next(times))
+    monkeypatch.setattr(time, "perf_counter", lambda: next(times))
     monkeypatch.setattr(gpu_metrics, "snapshot", fake_snapshot)
-    monkeypatch.setattr(gpu_metrics, "_torch_profiler_context", lambda: None)
+    monkeypatch.setattr(gpu_metrics, "_reset_peak_memory", lambda: None)
+    monkeypatch.setattr(gpu_metrics, "_peak_memory_allocated_mb", lambda: 512.0)
+    model = CallableModel()
 
     result = gpu_metrics.profile_inference(
-        model=fake_model,
-        audio_inputs=["a", "b"],
+        model=model,
+        audio_inputs=["a.wav", "b.wav"],
         label="fake",
     )
 
-    assert calls == ["a", "b"]
+    assert model.calls == [(["a.wav"], "el-GR"), (["b.wav"], "el-GR")]
     assert result["label"] == "fake"
     assert result["num_inputs"] == 2
     assert result["per_input_latencies_ms"] == pytest.approx([100.0, 300.0])
     assert result["avg_latency_ms"] == pytest.approx(200.0)
-    assert result["max_memory_allocated_mb"] == 64.0
+    assert result["max_memory_allocated_mb"] == 512.0
     assert result["avg_gpu_util_pct"] == 25.0
-    assert result["profiler_used"] is False
 
 
 def test_profile_inference_uses_transcribe_adapter_with_target_lang(monkeypatch) -> None:
@@ -192,9 +202,8 @@ def test_profile_inference_uses_transcribe_adapter_with_target_lang(monkeypatch)
             "gpu_utilization_pct": 25.0,
         }
 
-    monkeypatch.setattr(gpu_metrics.time, "perf_counter", lambda: next(times))
+    monkeypatch.setattr(time, "perf_counter", lambda: next(times))
     monkeypatch.setattr(gpu_metrics, "snapshot", fake_snapshot)
-    monkeypatch.setattr(gpu_metrics, "_torch_profiler_context", lambda: None)
 
     result = gpu_metrics.profile_inference(
         model=FakeModel(),

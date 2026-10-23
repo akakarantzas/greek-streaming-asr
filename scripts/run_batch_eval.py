@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import time
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
@@ -13,13 +12,9 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.asr.infer import (
-    _build_transcribe_call,
-    extract_transcript_text,
-)
+from src.asr.infer import transcribe_file
 from src.asr.model_loader import (
     DEFAULT_MODEL_ID,
-    get_gpu_memory_allocated_mb,
     get_gpu_name,
     load_model,
     resolve_device,
@@ -104,38 +99,51 @@ def run_batch_eval(
         model = load_model(model_id_or_path=model_id_or_path, device=device)
 
         def inference_fn(row: dict) -> dict:
-            return run_single_file_with_loaded_model(
+            return transcribe_file(
                 model=model,
-                audio_filepath=row["audio_filepath"],
+                audio_file=Path(row["audio_filepath"]),
                 target_lang=target_lang,
             )
 
+    output_path = Path(output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     per_file_rows: list[dict] = []
     warnings: list[str] = list(readiness_warnings)
-    for row in manifest_rows:
-        inference_result = inference_fn(row)
-        row_warnings = _coerce_warnings(inference_result.get("warnings", []))
-        warnings.extend(row_warnings)
-        per_file_rows.append(
-            {
-                "audio_filepath": row["audio_filepath"],
-                "reference_text": row["text"],
-                "hypothesis_text": str(inference_result.get("transcript", "")),
-                "language": language,
-                "language_readiness": language_readiness,
-                "wer": None,
-                "wer_no_accents": None,
-                "cer": None,
-                "latency_ms": _coerce_float(inference_result.get("latency_ms")),
-                "gpu_memory_allocated_mb": _coerce_float(
-                    inference_result.get("gpu_memory_allocated_mb")
-                ),
-                "duration": row.get("duration"),
-                "model_id_or_path": model_id_or_path,
-                "device": device,
-                "warnings": json.dumps(row_warnings, ensure_ascii=False),
-            }
-        )
+    try:
+        for row in manifest_rows:
+            inference_result = inference_fn(row)
+            row_warnings = _coerce_warnings(inference_result.get("warnings", []))
+            warnings.extend(row_warnings)
+            per_file_rows.append(
+                {
+                    "audio_filepath": row["audio_filepath"],
+                    "reference_text": row["text"],
+                    "hypothesis_text": str(inference_result.get("transcript", "")),
+                    "language": language,
+                    "language_readiness": language_readiness,
+                    "wer": None,
+                    "wer_no_accents": None,
+                    "cer": None,
+                    "latency_ms": _coerce_float(inference_result.get("latency_ms")),
+                    "gpu_memory_allocated_mb": _coerce_float(
+                        inference_result.get("gpu_memory_allocated_mb")
+                    ),
+                    "duration": row.get("duration"),
+                    "model_id_or_path": model_id_or_path,
+                    "device": device,
+                    "warnings": json.dumps(row_warnings, ensure_ascii=False),
+                }
+            )
+    except BaseException:
+        # Keep finished transcripts (also on Ctrl+C); no metrics or summary for a partial run.
+        if per_file_rows:
+            pd.DataFrame(per_file_rows).to_csv(output_path, index=False)
+            print(
+                f"Partial results ({len(per_file_rows)} of {len(manifest_rows)} files) "
+                f"written to {output_path}",
+                file=sys.stderr,
+            )
+        raise
 
     summary = build_summary(
         per_file_rows=per_file_rows,
@@ -149,9 +157,6 @@ def run_batch_eval(
     summary["device"] = device
     summary["gpu_name"] = get_gpu_name()
     _attach_metric_to_rows(per_file_rows, summary)
-
-    output_path = Path(output)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(per_file_rows).to_csv(output_path, index=False)
 
     summary_path = Path(summary_output or f"experiments/baseline/{language}_summary.json")
@@ -160,37 +165,6 @@ def run_batch_eval(
 
     print_summary(summary)
     return summary
-
-
-def run_single_file_with_loaded_model(
-    model: Any,
-    audio_filepath: str,
-    target_lang: str,
-) -> dict:
-    transcribe = getattr(model, "transcribe", None)
-    if not callable(transcribe):
-        raise RuntimeError(
-            "Loaded ASR model does not expose model.transcribe(). Check the installed "
-            "NeMo/Nemotron 3.5 ASR inference API for the restored model class."
-        )
-
-    warnings: list[str] = []
-    transcribe_call, target_lang_support = _build_transcribe_call(
-        transcribe=transcribe,
-        audio_file=Path(audio_filepath),
-        target_lang=target_lang,
-        warnings=warnings,
-    )
-    start = time.perf_counter()
-    raw_transcript = transcribe(*transcribe_call.args, **transcribe_call.kwargs)
-    latency_ms = (time.perf_counter() - start) * 1000
-    return {
-        "transcript": extract_transcript_text(raw_transcript),
-        "latency_ms": latency_ms,
-        "gpu_memory_allocated_mb": get_gpu_memory_allocated_mb(),
-        "target_lang_support": target_lang_support,
-        "warnings": warnings,
-    }
 
 
 def build_summary(

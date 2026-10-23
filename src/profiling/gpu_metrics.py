@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import subprocess
 import threading
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
-from src.asr.infer import _build_transcribe_call
+from src.asr.infer import transcribe_file
 from src.profiling.stats import mean as _mean
 from src.profiling.stats import percentile as _percentile
 
@@ -40,48 +39,27 @@ def profile_inference(
     model: Any,
     audio_inputs: list,
     label: str,
-    target_lang: str | None = None,
+    target_lang: str = "el-GR",
 ) -> dict:
     limitations = [
         "Local process inference profile; not a production serving benchmark.",
         "GPU utilization snapshots are sampled before, between inputs, and after inference.",
-        "Profiler availability depends on the installed torch build and CUDA visibility.",
     ]
     snapshots = [snapshot()]
     per_input_latencies_ms: list[float] = []
-    profiler_used = False
     warnings: list[str] = []
 
-    profiler_context = _torch_profiler_context()
-    if profiler_context is not None:
-        profiler_used = True
-
-    if profiler_context is None:
-        for audio_input in audio_inputs:
-            per_input_latencies_ms.append(
-                _time_model_call(
-                    model=model,
-                    audio_input=audio_input,
-                    target_lang=target_lang,
-                    warnings=warnings,
-                )
+    _reset_peak_memory()
+    for audio_input in audio_inputs:
+        per_input_latencies_ms.append(
+            _time_model_call(
+                model=model,
+                audio_input=audio_input,
+                target_lang=target_lang,
+                warnings=warnings,
             )
-            snapshots.append(snapshot())
-    else:
-        with profiler_context as profiler:
-            for audio_input in audio_inputs:
-                per_input_latencies_ms.append(
-                    _time_model_call(
-                        model=model,
-                        audio_input=audio_input,
-                        target_lang=target_lang,
-                        warnings=warnings,
-                    )
-                )
-                snapshots.append(snapshot())
-                step = getattr(profiler, "step", None)
-                if callable(step):
-                    step()
+        )
+        snapshots.append(snapshot())
 
     snapshots.append(snapshot())
     return {
@@ -90,12 +68,10 @@ def profile_inference(
         "avg_latency_ms": _mean(per_input_latencies_ms),
         "p50_latency_ms": _percentile(per_input_latencies_ms, 50),
         "p95_latency_ms": _percentile(per_input_latencies_ms, 95),
-        "max_memory_allocated_mb": _max_present(
-            item.get("memory_allocated_mb") for item in snapshots
-        ),
+        # True peak, same measure as concurrency_test; snapshots between calls miss it.
+        "max_memory_allocated_mb": _peak_memory_allocated_mb(),
         "avg_gpu_util_pct": _mean_present(item.get("gpu_utilization_pct") for item in snapshots),
         "per_input_latencies_ms": per_input_latencies_ms,
-        "profiler_used": profiler_used,
         "target_lang": target_lang,
         "warnings": sorted(set(warnings)),
         "limitations": limitations,
@@ -106,7 +82,7 @@ def concurrency_test(
     model: Any,
     audio_inputs: list,
     stream_counts: Sequence[int] = (1, 2, 4, 8),
-    target_lang: str | None = None,
+    target_lang: str = "el-GR",
 ) -> list[dict]:
     if not stream_counts:
         return []
@@ -208,7 +184,7 @@ def _run_concurrent_streams(
     model: Any,
     audio_inputs: list,
     stream_count: int,
-    target_lang: str | None = None,
+    target_lang: str = "el-GR",
 ) -> list[float]:
     latencies: list[float] = []
     errors: list[BaseException] = []
@@ -288,70 +264,13 @@ def _degradation_status(
 def _time_model_call(
     model: Any,
     audio_input: Any,
-    target_lang: str | None = None,
-    warnings: list[str] | None = None,
+    target_lang: str,
+    warnings: list[str],
 ) -> float:
-    start = time.perf_counter()
-    _run_model_inference(
-        model=model,
-        audio_input=audio_input,
-        target_lang=target_lang,
-        warnings=warnings,
-    )
-    return (time.perf_counter() - start) * 1000
-
-
-def _run_model_inference(
-    model: Any,
-    audio_input: Any,
-    target_lang: str | None = None,
-    warnings: list[str] | None = None,
-) -> Any:
-    if callable(model):
-        return model(audio_input)
-
-    transcribe = getattr(model, "transcribe", None)
-    if callable(transcribe):
-        if target_lang is not None:
-            transcribe_call, _target_lang_support = _build_transcribe_call(
-                transcribe=transcribe,
-                audio_file=Path(audio_input),
-                target_lang=target_lang,
-                warnings=warnings if warnings is not None else [],
-            )
-            return transcribe(*transcribe_call.args, **transcribe_call.kwargs)
-        return transcribe([audio_input])
-
-    raise RuntimeError("Model must be callable or expose a callable transcribe() method.")
-
-
-def _torch_profiler_context() -> Any | None:
-    try:
-        import torch
-    except ImportError:
-        return None
-
-    if not bool(torch.cuda.is_available()):
-        return None
-
-    profiler_module = getattr(torch, "profiler", None)
-    profile = getattr(profiler_module, "profile", None)
-    if not callable(profile):
-        return None
-
-    activities = []
-    profiler_activity = getattr(profiler_module, "ProfilerActivity", None)
-    if profiler_activity is not None:
-        cpu_activity = getattr(profiler_activity, "CPU", None)
-        cuda_activity = getattr(profiler_activity, "CUDA", None)
-        activities = [activity for activity in (cpu_activity, cuda_activity) if activity is not None]
-
-    try:
-        if activities:
-            return profile(activities=activities)
-        return profile()
-    except Exception:
-        return None
+    # Always go through transcribe(): a torch model is also callable, but that runs forward().
+    result = transcribe_file(model=model, audio_file=Path(audio_input), target_lang=target_lang)
+    warnings.extend(result["warnings"])
+    return result["latency_ms"]
 
 
 def _nvidia_smi_snapshot(
@@ -401,10 +320,3 @@ def _parse_float(value: str) -> float | None:
 def _mean_present(values: Any) -> float | None:
     present = [float(value) for value in values if value is not None]
     return _mean(present)
-
-
-def _max_present(values: Any) -> float | None:
-    present = [float(value) for value in values if value is not None]
-    if not present:
-        return None
-    return max(present)
