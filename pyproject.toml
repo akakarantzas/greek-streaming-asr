@@ -2,6 +2,7 @@
 name = "multilingual-streaming-asr"
 version = "0.1.0"
 requires-python = ">=3.11"
+# Dependencies are listed in the requirements*.txt files, not here.
 dependencies = []
 
 [tool.pytest.ini_options]
