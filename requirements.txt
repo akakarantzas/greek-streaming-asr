@@ -1,6 +1,9 @@
 # Core ML
 # Select PyTorch CUDA and NVIDIA NeMo versions according to the DGX Spark CUDA environment.
 # Versions are intentionally unpinned until the target environment is confirmed.
+# torchaudio releases are built for one specific torch version, so install them as a matching pair.
+# The model card asks for NeMo 26.06 (installed from NeMo's main branch), not the PyPI release;
+# follow the model card's install command and pin the resulting versions after the first real install.
 torch
 torchaudio
 nemo_toolkit[asr]
@@ -17,6 +20,3 @@ pandas
 
 # Plotting
 matplotlib
-
-# Testing
-pytest
