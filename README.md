@@ -46,7 +46,7 @@ Detailed milestones are in `docs/milestone_checklist.md`.
 If the model is gated, accept the model terms on Hugging Face and authenticate locally:
 
 ```bash
-huggingface-cli login
+hf auth login
 ```
 
 ## Setup
