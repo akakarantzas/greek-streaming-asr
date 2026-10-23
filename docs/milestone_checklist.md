@@ -26,6 +26,8 @@
 - [ ] latency and RTF logged
 - [ ] terminal demo works
 - [ ] native streaming support status documented
+- [x] browser comparison demo page scaffold (mock data)
+- [ ] demo server connected to the real base and fine-tuned models
 
 ## Milestone 3 - Cantonese/Yue Evaluation, Deferred Extension
 
@@ -49,7 +51,7 @@
 ## Milestone 5 - Greek Fine-Tuning
 
 - [ ] train/val/test manifests prepared
-- [ ] Greek adaptation-ready status documented
+- [x] Greek adaptation-ready status documented
 - [ ] fine-tuning config validated
 - [ ] training run completed or infeasibility documented
 - [ ] base vs fine-tuned WER compared
@@ -65,11 +67,9 @@
 - [ ] technical report complete
 - [ ] plots saved
 - [ ] demo video recorded
-- [ ] resume bullets updated with real numbers only
+- [ ] README results use measured numbers only
 
-## Commit Discipline
+## Repository Rules
 
-- One prompt per commit where practical.
-- Commit messages should reference the milestone.
 - Never commit raw private audio without consent.
 - Never commit large checkpoints.
