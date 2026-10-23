@@ -1,6 +1,7 @@
 # Minimal dependencies to run the test suite without a GPU (used by CI).
 # The heavy ML stack (torch, NeMo) is not needed.
-pytest
-jiwer
-numpy
-pandas
+# Pinned to versions that install on both Python 3.11 and 3.12 (numpy 2.5 needs 3.12).
+pytest==9.1.1
+jiwer==4.0.0
+numpy==2.4.6
+pandas==3.1.0
