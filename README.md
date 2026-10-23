@@ -188,6 +188,14 @@ tests/           Unit tests
 .github/         CI workflow
 ```
 
+## Contact
+
+Questions, partnership inquiries, or feedback about this project:
+
+- LinkedIn: [Apostolos Kakarantzas](https://www.linkedin.com/in/akakarantzas/)
+- X / Twitter: [@aevagnarly](https://x.com/aevagnarly)
+- Email: [hello@akakarantzas.com](mailto:hello@akakarantzas.com)
+
 ## License
 
 MIT
