@@ -16,11 +16,9 @@ The model weights are not included in this repository. They are downloaded from 
 
 Target hardware: NVIDIA DGX Spark. Development also happens on a consumer NVIDIA GPU (RTX 4060 Ti) and on CPU; none of these setups are verified yet. Each batch evaluation records the device and GPU it ran on.
 
-Status: pre-baseline. Environment checks and pipeline scaffolding are present; model revision, hardware results, and fine-tuning results are not yet recorded.
-
 ## Status
 
-Detailed milestones are in `docs/milestone_checklist.md`.
+Pre-baseline. Environment checks and pipeline scaffolding are present; model revision, hardware results, and fine-tuning results are not yet recorded. Detailed milestones are in `docs/milestone_checklist.md`.
 
 - [x] Repository scaffold
 - [x] Environment verification script
@@ -132,6 +130,8 @@ Run tests (no GPU needed; `requirements-test.txt` is enough, and CI uses it on P
 
 ```bash
 python -m pip install -r requirements-test.txt
+python -m pip install ruff
+python -m ruff check .
 pytest
 ```
 
@@ -151,7 +151,7 @@ Evaluation manifests are JSONL files:
 {"audio_filepath": "data/samples/el_gr_sample.wav", "text": "Reference transcript.", "duration": 3.2}
 ```
 
-Audio format expectations are currently TBD. Validation for sample rate, channels, and supported formats should be finalized before benchmark results are treated as final.
+Single-file inference accepts `.wav` or `.flac`. Validation for sample rate and channels is not finalized yet and should be settled before benchmark results are treated as final.
 
 See `data/manifests/README.md` for the full manifest format.
 
@@ -183,7 +183,7 @@ scripts/         CLI entry points
 data/            Manifests and sample placeholders
 experiments/     Baseline and fine-tuning outputs
 reports/         Result schemas and figures
-docs/            Milestone checklist
+docs/            Milestone checklist and images
 tests/           Unit tests
 .github/         CI workflow
 ```
