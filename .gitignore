@@ -238,3 +238,6 @@ data/samples/*
 wandb/
 mlruns/
 .pytest_cache/
+
+# Local tool settings
+.claude/
