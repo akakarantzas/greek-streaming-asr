@@ -12,6 +12,8 @@ A benchmark and evaluation toolkit for NVIDIA Nemotron 3.5 ASR, focused on Greek
 
 Target model: `nvidia/nemotron-3.5-asr-streaming-0.6b`
 
+The model weights are not included in this repository. They are downloaded from [Hugging Face](https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b) and are covered by NVIDIA's own license, not this repository's MIT license; see the model card for the terms.
+
 Target hardware: NVIDIA DGX Spark. Development also happens on a consumer NVIDIA GPU (RTX 4060 Ti) and on CPU; none of these setups are verified yet. Each batch evaluation records the device and GPU it ran on.
 
 Status: pre-baseline. Environment checks and pipeline scaffolding are present; model revision, hardware results, and fine-tuning results are not yet recorded.
