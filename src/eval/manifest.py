@@ -37,6 +37,9 @@ def load_jsonl_manifest(path: str, validate_files: bool = True) -> list[dict]:
                     base_dir=manifest_path.parent,
                 )
             )
+    if not rows:
+        # Zero rows would otherwise score a perfect WER of 0.0.
+        raise ValueError(f"Manifest has no rows: {manifest_path}")
     return rows
 
 

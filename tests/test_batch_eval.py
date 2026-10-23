@@ -1,11 +1,53 @@
 from __future__ import annotations
 
+import csv
+import json
+
+import pytest
+
 from scripts.run_batch_eval import (
     _attach_metric_to_rows,
     build_summary,
     language_readiness_for,
     percentile,
+    run_batch_eval,
 )
+
+
+def test_crash_mid_run_keeps_finished_transcripts(tmp_path) -> None:
+    manifest = tmp_path / "manifest.jsonl"
+    manifest.write_text(
+        "".join(
+            json.dumps({"audio_filepath": f"{name}.wav", "text": "γεια σου"}) + "\n"
+            for name in ("a", "b", "c")
+        ),
+        encoding="utf-8",
+    )
+    output = tmp_path / "results.csv"
+
+    def inference_fn(row: dict) -> dict:
+        if row["audio_filepath"].endswith("b.wav"):
+            raise RuntimeError("CUDA out of memory")
+        return {"transcript": "γεια σου", "latency_ms": 10.0}
+
+    with pytest.raises(RuntimeError, match="out of memory"):
+        run_batch_eval(
+            manifest_path=str(manifest),
+            model_id_or_path="model",
+            language="el",
+            target_lang="el-GR",
+            output=str(output),
+            summary_output=str(tmp_path / "summary.json"),
+            device="cpu",
+            validate_files=False,
+            inference_fn=inference_fn,
+        )
+
+    with output.open(encoding="utf-8") as csv_file:
+        rows = list(csv.DictReader(csv_file))
+    assert [row["hypothesis_text"] for row in rows] == ["γεια σου"]
+    assert rows[0]["audio_filepath"].endswith("a.wav")
+    assert not (tmp_path / "summary.json").exists()
 
 
 def test_build_summary_computes_greek_wer_and_latency_stats() -> None:

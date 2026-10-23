@@ -37,33 +37,17 @@ def run_single_file_inference(
     language_readiness = _language_readiness(target_lang, warnings)
 
     model = load_model(model_id_or_path=model_id_or_path, device=device)
-    transcribe = getattr(model, "transcribe", None)
-    if not callable(transcribe):
-        raise RuntimeError(
-            "Loaded ASR model does not expose model.transcribe(). Check the installed "
-            "NeMo/Nemotron 3.5 ASR inference API for the restored model class before "
-            "running single-file inference."
-        )
-
-    transcribe_call, target_lang_support = _build_transcribe_call(
-        transcribe=transcribe,
-        audio_file=audio_file,
-        target_lang=target_lang,
-        warnings=warnings,
-    )
-
-    start = time.perf_counter()
-    raw_transcript = transcribe(*transcribe_call.args, **transcribe_call.kwargs)
-    latency_ms = (time.perf_counter() - start) * 1000
-
-    transcript = extract_transcript_text(raw_transcript)
-    gpu_memory_allocated_mb = get_gpu_memory_allocated_mb()
+    transcription = transcribe_file(model=model, audio_file=audio_file, target_lang=target_lang)
+    warnings.extend(transcription["warnings"])
+    transcript = transcription["transcript"]
+    latency_ms = transcription["latency_ms"]
+    gpu_memory_allocated_mb = transcription["gpu_memory_allocated_mb"]
 
     result = {
         "audio_filepath": str(audio_file),
         "model_id_or_path": model_id_or_path,
         "target_lang": target_lang,
-        "target_lang_support": target_lang_support,
+        "target_lang_support": transcription["target_lang_support"],
         "language_readiness": language_readiness,
         "warnings": warnings,
         "transcript": transcript,
@@ -186,18 +170,16 @@ def _language_readiness(target_lang: str, warnings: list[str]) -> str:
     return "auto"
 
 
-class _TranscribeCall:
-    def __init__(self, args: list[Any], kwargs: dict[str, Any]) -> None:
-        self.args = args
-        self.kwargs = kwargs
+def transcribe_file(model: Any, audio_file: Path, target_lang: str) -> dict:
+    """Transcribe one audio file with an already loaded model; only the model call is timed."""
+    transcribe = getattr(model, "transcribe", None)
+    if not callable(transcribe):
+        raise RuntimeError(
+            "Loaded ASR model does not expose model.transcribe(). Check the installed "
+            "NeMo/Nemotron 3.5 ASR inference API for the restored model class."
+        )
 
-
-def _build_transcribe_call(
-    transcribe: Any,
-    audio_file: Path,
-    target_lang: str,
-    warnings: list[str],
-) -> tuple[_TranscribeCall, bool]:
+    warnings: list[str] = []
     kwargs: dict[str, Any] = {}
     args: list[Any] = []
 
@@ -219,7 +201,16 @@ def _build_transcribe_call(
             "without target-language conditioning."
         )
 
-    return _TranscribeCall(args=args, kwargs=kwargs), target_lang_support
+    start = time.perf_counter()
+    raw_transcript = transcribe(*args, **kwargs)
+    latency_ms = (time.perf_counter() - start) * 1000
+    return {
+        "transcript": extract_transcript_text(raw_transcript),
+        "latency_ms": latency_ms,
+        "gpu_memory_allocated_mb": get_gpu_memory_allocated_mb(),
+        "target_lang_support": target_lang_support,
+        "warnings": warnings,
+    }
 
 
 if __name__ == "__main__":

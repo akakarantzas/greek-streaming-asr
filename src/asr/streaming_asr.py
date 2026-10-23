@@ -10,8 +10,8 @@ import numpy as np
 
 from src.asr.infer import (
     ALLOWED_TARGET_LANGS,
-    _build_transcribe_call,
     extract_transcript_text,
+    transcribe_file,
 )
 from src.asr.introspection import call_accepts_parameter
 from src.audio.microphone import DEFAULT_SAMPLE_RATE
@@ -174,12 +174,11 @@ class ChunkedASRSession:
                 )
             return extract_transcript_text(transcribe(**kwargs))
 
-        return self._run_chunked_fallback_with_temp_wav(audio, transcribe, warnings)
+        return self._run_chunked_fallback_with_temp_wav(audio, warnings)
 
     def _run_chunked_fallback_with_temp_wav(
         self,
         audio: np.ndarray,
-        transcribe: Any,
         warnings: list[str],
     ) -> str:
         try:
@@ -199,15 +198,13 @@ class ChunkedASRSession:
             ) as temp_file:
                 temp_path = Path(temp_file.name)
             sf.write(temp_path, audio, self.sample_rate)
-            transcribe_call, _target_lang_support = _build_transcribe_call(
-                transcribe=transcribe,
+            result = transcribe_file(
+                model=self.model,
                 audio_file=temp_path,
                 target_lang=self.target_lang,
-                warnings=warnings,
             )
-            return extract_transcript_text(
-                transcribe(*transcribe_call.args, **transcribe_call.kwargs)
-            )
+            warnings.extend(result["warnings"])
+            return result["transcript"]
         finally:
             if temp_path is not None:
                 temp_path.unlink(missing_ok=True)

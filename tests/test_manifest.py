@@ -99,6 +99,15 @@ def test_invalid_json_line() -> None:
             load_jsonl_manifest(str(manifest_file), validate_files=False)
 
 
+def test_manifest_with_only_blank_lines_is_rejected() -> None:
+    with _workspace_temp_dir() as temp_dir:
+        manifest_file = temp_dir / "manifest.jsonl"
+        manifest_file.write_text("\n  \n", encoding="utf-8")
+
+        with pytest.raises(ValueError, match="no rows"):
+            load_jsonl_manifest(str(manifest_file), validate_files=False)
+
+
 def test_missing_audio_file_when_validate_files_true() -> None:
     with _workspace_temp_dir() as temp_dir:
         manifest_file = temp_dir / "manifest.jsonl"
