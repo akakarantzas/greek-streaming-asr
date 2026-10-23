@@ -186,7 +186,6 @@ reports/         Result schemas and figures
 docs/            Milestone checklist
 tests/           Unit tests
 .github/         CI workflow
-context.md       Running project notes (model, hardware, confirmed findings)
 ```
 
 ## License
