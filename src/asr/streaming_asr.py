@@ -9,9 +9,10 @@ from typing import Any, Callable, Iterable, Iterator
 import numpy as np
 
 from src.asr.infer import (
-    ALLOWED_TARGET_LANGS,
     extract_transcript_text,
+    language_readiness_for,
     transcribe_file,
+    validate_target_lang,
 )
 from src.asr.introspection import call_accepts_parameter
 from src.audio.microphone import DEFAULT_SAMPLE_RATE
@@ -61,9 +62,7 @@ class ChunkedASRSession:
         timestamp_fn: Callable[[], str] | None = None,
         log_events: bool = True,
     ) -> None:
-        if target_lang not in ALLOWED_TARGET_LANGS:
-            allowed = ", ".join(sorted(ALLOWED_TARGET_LANGS))
-            raise ValueError(f"Unsupported target_lang {target_lang!r}. Allowed values: {allowed}")
+        validate_target_lang(target_lang)
         if sample_rate <= 0:
             raise ValueError("sample_rate must be positive")
         if inference_interval_s <= 0:
@@ -82,7 +81,7 @@ class ChunkedASRSession:
         self.log_events = log_events
         # Native (cache-aware) streaming is not wired up until the model's API is confirmed.
         self.mode = "chunked_fallback"
-        self.language_readiness, self.session_warnings = _language_readiness(target_lang)
+        self.language_readiness, self.session_warnings = language_readiness_for(target_lang)
         self._samples_since_inference = 0
         self._event_count = 0
 
@@ -194,18 +193,6 @@ def calculate_rtf(processing_time_s: float, audio_duration_s: float) -> float:
     if audio_duration_s <= 0:
         return float("inf")
     return processing_time_s / audio_duration_s
-
-
-def _language_readiness(target_lang: str) -> tuple[str, list[str]]:
-    if target_lang == "el-GR":
-        return (
-            "adaptation_ready",
-            [
-                "Greek el-GR streaming output is exploratory/adaptation-ready until "
-                "fine-tuning/evaluation is measured."
-            ],
-        )
-    return "auto", []
 
 
 def _utc_timestamp() -> str:

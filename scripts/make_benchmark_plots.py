@@ -50,7 +50,6 @@ def load_benchmark_artifacts(input_dir: str) -> dict:
     for filename in (
         "profile_summary.json",
         "concurrency_summary.json",
-        "gpu_snapshots.json",
     ):
         path = directory / filename
         if path.exists():
@@ -63,18 +62,12 @@ def generate_plots(artifacts: dict, output_dir: Path) -> list[Path]:
 
     generated: list[Path] = []
     generated.extend(_plot_latency_distribution(artifacts, output_dir, plt))
-    generated.extend(_plot_gpu_util_over_time(artifacts, output_dir, plt))
     generated.extend(_plot_concurrency_latency(artifacts, output_dir, plt))
     return generated
 
 
 def has_latency_distribution_data(artifacts: dict) -> bool:
     return bool(artifacts.get("profile_summary", {}).get("per_input_latencies_ms"))
-
-
-def has_gpu_util_time_series(artifacts: dict) -> bool:
-    snapshots = artifacts.get("gpu_snapshots", [])
-    return any(item.get("gpu_utilization_pct") is not None for item in snapshots)
 
 
 def has_concurrency_latency_data(artifacts: dict) -> bool:
@@ -92,25 +85,6 @@ def _plot_latency_distribution(artifacts: dict, output_dir: Path, plt) -> list[P
     plt.xlabel("Latency (ms)")
     plt.ylabel("Count")
     plt.title("Per-file Latency Distribution")
-    plt.tight_layout()
-    plt.savefig(path, dpi=150)
-    plt.close()
-    return [path]
-
-
-def _plot_gpu_util_over_time(artifacts: dict, output_dir: Path, plt) -> list[Path]:
-    if not has_gpu_util_time_series(artifacts):
-        print("Skipping gpu_util_over_time.png: missing GPU utilization time series.")
-        return []
-    snapshots = [
-        item for item in artifacts["gpu_snapshots"] if item.get("gpu_utilization_pct") is not None
-    ]
-    path = output_dir / "gpu_util_over_time.png"
-    plt.figure()
-    plt.plot(range(len(snapshots)), [item["gpu_utilization_pct"] for item in snapshots], marker="o")
-    plt.xlabel("Snapshot index")
-    plt.ylabel("GPU utilization (%)")
-    plt.title("GPU Utilization Over Benchmark Run")
     plt.tight_layout()
     plt.savefig(path, dpi=150)
     plt.close()

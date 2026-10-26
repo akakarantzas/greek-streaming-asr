@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from src.asr.infer import transcribe_file
+from src.asr.model_loader import get_gpu_memory_allocated_mb, get_gpu_name
 from src.profiling.stats import mean as _mean
 from src.profiling.stats import percentile as _percentile
 
@@ -148,9 +149,8 @@ def _peak_memory_allocated_mb() -> float | None:
 
 
 def _torch_snapshot() -> dict:
-    try:
-        import torch
-    except ImportError:
+    gpu_name = get_gpu_name()
+    if gpu_name is None:  # no torch or no CUDA
         return {
             "cuda_available": False,
             "gpu_name": None,
@@ -159,24 +159,14 @@ def _torch_snapshot() -> dict:
             "memory_total_mb": None,
         }
 
-    cuda_available = bool(torch.cuda.is_available())
-    if not cuda_available:
-        return {
-            "cuda_available": False,
-            "gpu_name": None,
-            "memory_allocated_mb": None,
-            "memory_reserved_mb": None,
-            "memory_total_mb": None,
-        }
+    import torch
 
-    device_index = 0
-    properties = torch.cuda.get_device_properties(device_index)
     return {
         "cuda_available": True,
-        "gpu_name": str(torch.cuda.get_device_name(device_index)),
-        "memory_allocated_mb": _bytes_to_mb(torch.cuda.memory_allocated(device_index)),
-        "memory_reserved_mb": _bytes_to_mb(torch.cuda.memory_reserved(device_index)),
-        "memory_total_mb": _bytes_to_mb(properties.total_memory),
+        "gpu_name": gpu_name,
+        "memory_allocated_mb": get_gpu_memory_allocated_mb(),
+        "memory_reserved_mb": _bytes_to_mb(torch.cuda.memory_reserved(0)),
+        "memory_total_mb": _bytes_to_mb(torch.cuda.get_device_properties(0).total_memory),
     }
 
 

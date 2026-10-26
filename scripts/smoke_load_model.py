@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from types import ModuleType
 from typing import Sequence
 
 
@@ -62,24 +61,6 @@ def build_troubleshooting_message(error: BaseException) -> str:
     )
 
 
-def import_torch_if_available() -> ModuleType | None:
-    try:
-        import torch
-    except ImportError:
-        return None
-    return torch
-
-
-def print_cuda_status(torch_module: ModuleType | None) -> bool:
-    if torch_module is None:
-        print("CUDA available: unknown (torch is not importable)")
-        return False
-
-    cuda_available = bool(torch_module.cuda.is_available())
-    print(f"CUDA available: {cuda_available}")
-    return cuda_available
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_arg_parser()
     args = parser.parse_args(argv)
@@ -90,10 +71,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.revision:
         print(f"Selected revision: {args.revision}")
 
-    torch_module = import_torch_if_available()
-    cuda_available = print_cuda_status(torch_module)
-    if cuda_available:
-        print(f"GPU memory before loading: {get_gpu_memory_allocated_mb():.2f} MB")
+    before_mb = get_gpu_memory_allocated_mb()  # None without torch or CUDA
+    if before_mb is not None:
+        print(f"GPU memory before loading: {before_mb:.2f} MB")
 
     try:
         model = load_model(
@@ -105,8 +85,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(build_troubleshooting_message(exc), file=sys.stderr)
         return 1
 
-    if cuda_available:
-        print(f"GPU memory after loading: {get_gpu_memory_allocated_mb():.2f} MB")
+    after_mb = get_gpu_memory_allocated_mb()
+    if after_mb is not None:
+        print(f"GPU memory after loading: {after_mb:.2f} MB")
     print(f"Loaded model class: {type(model).__name__}")
     return 0
 

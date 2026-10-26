@@ -12,7 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.asr.infer import transcribe_file
+from src.asr.infer import language_readiness_for, transcribe_file
 from src.asr.model_loader import (
     DEFAULT_MODEL_ID,
     get_gpu_name,
@@ -86,7 +86,7 @@ def run_batch_eval(
     _validate_language_target(language, target_lang)
     device = resolve_device(device)
     manifest_rows = load_jsonl_manifest(manifest_path, validate_files=validate_files)
-    language_readiness, readiness_warnings = language_readiness_for(language)
+    language_readiness, readiness_warnings = language_readiness_for(target_lang)
 
     if inference_fn is None:
         model = load_model(model_id_or_path=model_id_or_path, device=device)
@@ -214,23 +214,6 @@ def build_summary(
         "warnings": sorted(set(warnings or [])),
         "manifest_path": manifest_path,
     }
-
-
-def language_readiness_for(language: str) -> tuple[str, list[str]]:
-    if language == "el":
-        return (
-            "adaptation_ready",
-            [
-                "Greek el evaluation is exploratory/adaptation-ready until a confirmed "
-                "fine-tuned model is evaluated."
-            ],
-        )
-    if language == "yue":
-        return (
-            "future_extension_disabled",
-            ["Cantonese (Yue) CER is implemented but not enabled for the core milestone."],
-        )
-    raise ValueError(f"Unsupported language: {language}")
 
 
 def print_summary(summary: dict) -> None:

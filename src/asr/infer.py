@@ -30,11 +30,11 @@ def run_single_file_inference(
 ) -> dict:
     device = resolve_device(device)
     audio_file = _validate_audio_path(audio_path)
-    _validate_target_lang(target_lang)
+    validate_target_lang(target_lang)
 
     result_output_path = Path(output_path or DEFAULT_OUTPUT_PATH)
-    warnings: list[str] = []
-    language_readiness = _language_readiness(target_lang, warnings)
+    language_readiness, readiness_warnings = language_readiness_for(target_lang)
+    warnings = list(readiness_warnings)
 
     model = load_model(model_id_or_path=model_id_or_path, device=device)
     transcription = transcribe_file(model=model, audio_file=audio_file, target_lang=target_lang)
@@ -154,20 +154,23 @@ def _validate_audio_path(audio_path: str) -> Path:
     return path
 
 
-def _validate_target_lang(target_lang: str) -> None:
+def validate_target_lang(target_lang: str) -> None:
     if target_lang not in ALLOWED_TARGET_LANGS:
         allowed = ", ".join(sorted(ALLOWED_TARGET_LANGS))
         raise ValueError(f"Unsupported target_lang {target_lang!r}. Allowed values: {allowed}")
 
 
-def _language_readiness(target_lang: str, warnings: list[str]) -> str:
+def language_readiness_for(target_lang: str) -> tuple[str, list[str]]:
+    """The one readiness label and warning per target language, used by every output."""
     if target_lang == "el-GR":
-        warnings.append(
-            "Greek el-GR is adaptation-ready; quality is not confirmed until "
-            "fine-tuning/evaluation is measured."
+        return (
+            "adaptation_ready",
+            [
+                "Greek el-GR output is exploratory/adaptation-ready; quality is not confirmed "
+                "until a fine-tuned model is evaluated."
+            ],
         )
-        return "adaptation_ready"
-    return "auto"
+    return "auto", []
 
 
 def transcribe_file(model: Any, audio_file: Path, target_lang: str) -> dict:
@@ -191,10 +194,15 @@ def transcribe_file(model: Any, audio_file: Path, target_lang: str) -> dict:
     else:
         args.append(audio_values)
 
-    target_lang_support = False
+    # Only a named parameter counts as support; **kwargs may silently ignore the hint.
+    target_lang_support = call_has_named_parameter(transcribe, "target_lang")
     if call_accepts_parameter(transcribe, "target_lang"):
         kwargs["target_lang"] = target_lang
-        target_lang_support = True
+        if not target_lang_support:
+            warnings.append(
+                "target_lang was passed through model.transcribe(**kwargs); whether the "
+                "model uses it is unverified."
+            )
     else:
         warnings.append(
             "Installed model.transcribe() API does not expose target_lang; continuing "

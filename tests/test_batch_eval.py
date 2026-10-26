@@ -8,7 +8,6 @@ import pytest
 from scripts.run_batch_eval import (
     _attach_metric_to_rows,
     build_summary,
-    language_readiness_for,
     percentile,
     run_batch_eval,
 )
@@ -81,13 +80,6 @@ def test_build_summary_computes_greek_wer_and_latency_stats() -> None:
     assert summary["p50_latency_ms"] == 150.0
     assert summary["p95_latency_ms"] == 195.0
     assert summary["substitutions"] == 1
-
-
-def test_build_summary_labels_greek_as_adaptation_ready() -> None:
-    readiness, warnings = language_readiness_for("el")
-
-    assert readiness == "adaptation_ready"
-    assert "exploratory" in warnings[0]
 
 
 def test_attach_metric_to_rows_uses_per_file_metric() -> None:

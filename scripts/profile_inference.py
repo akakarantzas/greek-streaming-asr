@@ -13,7 +13,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.asr.model_loader import DEFAULT_MODEL_ID, load_model, resolve_device  # noqa: E402
 from src.eval.manifest import load_jsonl_manifest  # noqa: E402
-from src.profiling.gpu_metrics import concurrency_test, profile_inference, snapshot  # noqa: E402
+from src.profiling.gpu_metrics import concurrency_test, profile_inference  # noqa: E402
 
 
 LANGUAGE_CHOICES = ("el",)
@@ -56,7 +56,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        validate_language_target(args.language, args.target_lang)
         stream_counts = parse_stream_counts(args.stream_counts)
         output_dir = Path(args.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -64,7 +63,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         manifest_rows = load_jsonl_manifest(args.manifest, validate_files=True)
         audio_inputs = [row["audio_filepath"] for row in manifest_rows]
 
-        gpu_snapshots = [snapshot()]
         device = resolve_device(args.device)
         model = load_model(model_id_or_path=args.model_id_or_path, device=device)
         profile_summary = profile_inference(
@@ -73,18 +71,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             label=f"{args.language}:{args.target_lang}",
             target_lang=args.target_lang,
         )
-        gpu_snapshots.append(snapshot())
         concurrency_summary = concurrency_test(
             model=model,
             audio_inputs=audio_inputs,
             stream_counts=stream_counts,
             target_lang=args.target_lang,
         )
-        gpu_snapshots.append(snapshot())
 
         _write_json(output_dir / "profile_summary.json", profile_summary)
         _write_json(output_dir / "concurrency_summary.json", concurrency_summary)
-        _write_json(output_dir / "gpu_snapshots.json", gpu_snapshots)
         print_profile_summary(profile_summary, concurrency_summary, output_dir)
     except (ValueError, RuntimeError, ImportError) as exc:
         print(f"Profiling failed: {exc}", file=sys.stderr)
@@ -100,11 +95,6 @@ def parse_stream_counts(value: str) -> list[int]:
     if not stream_counts or any(stream_count <= 0 for stream_count in stream_counts):
         raise ValueError("--stream-counts must contain positive integers")
     return stream_counts
-
-
-def validate_language_target(language: str, target_lang: str) -> None:
-    if language == "el" and target_lang != "el-GR":
-        raise ValueError("Greek profiling requires --target-lang el-GR")
 
 
 def print_profile_summary(profile_summary: dict, concurrency_summary: list[dict], output_dir: Path) -> None:

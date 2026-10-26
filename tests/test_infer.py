@@ -3,8 +3,9 @@ from __future__ import annotations
 import pytest
 
 from src.asr.infer import (
-    _language_readiness,
     extract_transcript_text,
+    language_readiness_for,
+    transcribe_file,
 )
 
 
@@ -37,7 +38,29 @@ def test_extract_transcript_rejects_unknown_result_type() -> None:
 
 
 def test_language_readiness_warns_for_greek_exploratory_use() -> None:
-    warnings: list[str] = []
+    readiness, warnings = language_readiness_for("el-GR")
 
-    assert _language_readiness("el-GR", warnings) == "adaptation_ready"
-    assert "Greek el-GR is adaptation-ready" in warnings[0]
+    assert readiness == "adaptation_ready"
+    assert "exploratory" in warnings[0]
+    assert language_readiness_for("auto") == ("auto", [])
+
+
+def test_target_lang_support_requires_a_named_parameter(tmp_path) -> None:
+    class KwargsModel:
+        def transcribe(self, audio, **config_kwargs):
+            self.config_kwargs = config_kwargs
+            return ["text"]
+
+    class NamedModel:
+        def transcribe(self, audio, target_lang=None):
+            return ["text"]
+
+    kwargs_model = KwargsModel()
+    via_kwargs = transcribe_file(kwargs_model, tmp_path / "a.wav", "el-GR")
+    named = transcribe_file(NamedModel(), tmp_path / "a.wav", "el-GR")
+
+    assert kwargs_model.config_kwargs == {"target_lang": "el-GR"}
+    assert via_kwargs["target_lang_support"] is False
+    assert "unverified" in via_kwargs["warnings"][0]
+    assert named["target_lang_support"] is True
+    assert named["warnings"] == []
