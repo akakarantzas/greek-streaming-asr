@@ -60,9 +60,10 @@ def test_summarize_session_calculates_latency_and_rtf_stats() -> None:
         {"latency_ms": 300.0, "rtf": 0.6},
     ]
 
-    summary = summarize_session(events, total_runtime_s=4.0)
+    summary = summarize_session(events, total_runtime_s=4.0, dropped_audio_s=0.5)
 
     assert summary["total_runtime_s"] == 4.0
+    assert summary["dropped_audio_s"] == 0.5
     assert summary["inference_windows"] == 3
     assert summary["avg_latency_ms"] == 200.0
     assert summary["p50_latency_ms"] == 200.0

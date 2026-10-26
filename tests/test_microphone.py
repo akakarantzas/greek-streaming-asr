@@ -57,3 +57,14 @@ def test_callback_ignores_audio_after_close() -> None:
     )
 
     assert list(stream.chunks()) == []
+
+
+def test_callback_counts_chunks_dropped_when_queue_is_full() -> None:
+    stream = MicrophoneAudioStream(max_queue_chunks=1)
+    stream._closed = False
+
+    for value in (1.0, 2.0, 3.0):
+        stream._callback(np.array([[value]], dtype=np.float32), _frames=1, _time_info=None, status=None)
+
+    assert stream.dropped_chunks == 2
+    np.testing.assert_array_equal(stream._queue.get_nowait(), np.array([3.0], dtype=np.float32))

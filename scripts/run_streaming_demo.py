@@ -101,9 +101,10 @@ def run_demo(args: argparse.Namespace) -> int:
     )
 
     events: list[dict] = []
+    microphone = MicrophoneAudioStream(chunk_size=chunk_samples)
     start = time.perf_counter()
     try:
-        with MicrophoneAudioStream(chunk_size=chunk_samples) as microphone:
+        with microphone:
             for chunk in microphone:
                 if args.max_seconds is not None and time.perf_counter() - start >= args.max_seconds:
                     break
@@ -117,11 +118,16 @@ def run_demo(args: argparse.Namespace) -> int:
     finally:
         total_runtime_s = time.perf_counter() - start
         print()
-        print_session_summary(summarize_session(events, total_runtime_s))
+        dropped_audio_s = microphone.dropped_chunks * chunk_samples / DEFAULT_SAMPLE_RATE
+        print_session_summary(summarize_session(events, total_runtime_s, dropped_audio_s))
     return 0
 
 
-def summarize_session(events: list[dict], total_runtime_s: float) -> dict:
+def summarize_session(
+    events: list[dict],
+    total_runtime_s: float,
+    dropped_audio_s: float = 0.0,
+) -> dict:
     latencies = [float(event["latency_ms"]) for event in events if event.get("latency_ms") is not None]
     rtfs = [float(event["rtf"]) for event in events if event.get("rtf") is not None]
     return {
@@ -131,6 +137,7 @@ def summarize_session(events: list[dict], total_runtime_s: float) -> dict:
         "p50_latency_ms": percentile(latencies, 50),
         "p95_latency_ms": percentile(latencies, 95),
         "avg_rtf": _mean(rtfs),
+        "dropped_audio_s": dropped_audio_s,
     }
 
 
@@ -177,6 +184,13 @@ def print_session_summary(summary: dict) -> None:
     print(f"p50_latency_ms: {_format_optional_float(summary['p50_latency_ms'])}")
     print(f"p95_latency_ms: {_format_optional_float(summary['p95_latency_ms'])}")
     print(f"avg_rtf: {_format_optional_float(summary['avg_rtf'])}")
+    print(f"dropped_audio_s: {_format_optional_float(summary['dropped_audio_s'])}")
+    if summary["dropped_audio_s"] > 0:
+        # latency_ms only times the model call, so falling behind shows up here instead.
+        print(
+            "warning: inference fell behind the microphone; the oldest audio was dropped and "
+            "transcripts skip it. Try a longer --inference-window-ms or a faster device."
+        )
 
 
 def chunk_ms_to_samples(chunk_ms: int, sample_rate: int) -> int:
