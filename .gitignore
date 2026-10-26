@@ -229,6 +229,7 @@ plan*.pdf
 .venv/
 data/samples/*
 !data/samples/.gitkeep
+data/fleurs/
 *.pt
 *.pth
 *.ckpt

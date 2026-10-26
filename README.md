@@ -153,6 +153,14 @@ Single-file inference accepts `.wav` or `.flac`. Validation for sample rate and 
 
 See `data/manifests/README.md` for the full manifest format.
 
+To get the FLEURS Greek test set (650 clips, 349 MB download) as audio plus a ready manifest at `data/fleurs/el_gr_test.jsonl`:
+
+```bash
+python scripts/prepare_fleurs.py --split test
+```
+
+Add `--limit 10` for a quick smoke-run set; it writes `el_gr_test_first10.jsonl`, so it never replaces the full manifest. Re-running skips files that are already downloaded.
+
 ## Outputs
 
 Output directories are created automatically by the scripts where needed.
