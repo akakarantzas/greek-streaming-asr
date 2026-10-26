@@ -9,10 +9,6 @@ from src.asr.introspection import call_has_named_parameter
 DEFAULT_MODEL_ID = "nvidia/nemotron-3.5-asr-streaming-0.6b"
 
 
-def format_bytes_as_gb(num_bytes: int) -> str:
-    return f"{num_bytes / 1024**3:.2f} GB"
-
-
 def get_gpu_memory_allocated_mb() -> float | None:
     """Allocated CUDA memory in MB, or None when it cannot be measured (no torch or no CUDA)."""
     try:
@@ -125,11 +121,7 @@ def load_model(
 
     allocated_mb = get_gpu_memory_allocated_mb()
     if allocated_mb is not None:
-        allocated_bytes = int(allocated_mb * 1024**2)
-        print(
-            "GPU memory allocated after model load: "
-            f"{allocated_mb:.2f} MB ({format_bytes_as_gb(allocated_bytes)})"
-        )
+        print(f"GPU memory allocated after model load: {allocated_mb:.2f} MB")
 
     return model
 

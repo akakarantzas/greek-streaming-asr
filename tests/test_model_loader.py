@@ -12,7 +12,6 @@ from src.asr.model_loader import (
     DEFAULT_MODEL_ID,
     _looks_like_local_nemo_path,
     _validate_local_nemo_path,
-    format_bytes_as_gb,
     get_gpu_memory_allocated_mb,
     get_gpu_name,
     resolve_device,
@@ -61,11 +60,6 @@ def test_validate_local_nemo_path_rejects_directory() -> None:
 
         with pytest.raises(ValueError, match="must be a file"):
             _validate_local_nemo_path(str(checkpoint))
-
-
-def test_format_bytes_as_gb() -> None:
-    assert format_bytes_as_gb(0) == "0.00 GB"
-    assert format_bytes_as_gb(1073741824) == "1.00 GB"
 
 
 @contextmanager

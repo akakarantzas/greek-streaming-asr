@@ -59,7 +59,7 @@ def test_torch_snapshot_uses_cuda_memory(monkeypatch) -> None:
     fake_cuda = types.SimpleNamespace(
         is_available=lambda: True,
         get_device_name=lambda _device_index: "Fake GPU",
-        memory_allocated=lambda _device_index: 256 * 1024**2,
+        memory_allocated=lambda *_device_index: 256 * 1024**2,
         memory_reserved=lambda _device_index: 512 * 1024**2,
         get_device_properties=lambda _device_index: types.SimpleNamespace(
             total_memory=1024 * 1024**2

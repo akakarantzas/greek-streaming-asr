@@ -75,7 +75,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 
 def run_demo(args: argparse.Namespace) -> int:
-    validate_language_target(args.language, args.target_lang)
     chunk_samples = chunk_ms_to_samples(args.chunk_ms, DEFAULT_SAMPLE_RATE)
     inference_window_s = args.inference_window_ms / 1000
 
@@ -178,11 +177,6 @@ def print_session_summary(summary: dict) -> None:
     print(f"p50_latency_ms: {_format_optional_float(summary['p50_latency_ms'])}")
     print(f"p95_latency_ms: {_format_optional_float(summary['p95_latency_ms'])}")
     print(f"avg_rtf: {_format_optional_float(summary['avg_rtf'])}")
-
-
-def validate_language_target(language: str, target_lang: str) -> None:
-    if language == "el" and target_lang not in {"el-GR", "auto"}:
-        raise ValueError("Greek display language should use --target-lang el-GR or auto")
 
 
 def chunk_ms_to_samples(chunk_ms: int, sample_rate: int) -> int:
