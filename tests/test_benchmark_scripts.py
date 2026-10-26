@@ -1,9 +1,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
-from contextlib import contextmanager
-from pathlib import Path
 
 import pytest
 
@@ -24,14 +21,13 @@ def test_parse_stream_counts_rejects_non_positive() -> None:
         parse_stream_counts("1,0")
 
 
-def test_load_benchmark_artifacts() -> None:
-    with _workspace_temp_dir() as temp_dir:
-        (temp_dir / "profile_summary.json").write_text(
-            json.dumps({"per_input_latencies_ms": [1.0]}),
-            encoding="utf-8",
-        )
+def test_load_benchmark_artifacts(tmp_path) -> None:
+    (tmp_path / "profile_summary.json").write_text(
+        json.dumps({"per_input_latencies_ms": [1.0]}),
+        encoding="utf-8",
+    )
 
-        artifacts = load_benchmark_artifacts(str(temp_dir))
+    artifacts = load_benchmark_artifacts(str(tmp_path))
 
     assert artifacts == {"profile_summary": {"per_input_latencies_ms": [1.0]}}
 
@@ -51,12 +47,3 @@ def test_plot_data_presence_helpers() -> None:
 def test_missing_plot_data_helpers_return_false() -> None:
     assert not has_latency_distribution_data({})
     assert not has_concurrency_latency_data({})
-
-
-@contextmanager
-def _workspace_temp_dir():
-    with tempfile.TemporaryDirectory(
-        prefix="benchmark_",
-        dir=Path.cwd() / "tests",
-    ) as temp_dir:
-        yield Path(temp_dir)
