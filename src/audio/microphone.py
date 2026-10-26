@@ -27,6 +27,8 @@ class MicrophoneAudioStream:
         self._queue: queue.Queue[np.ndarray | object] = queue.Queue(maxsize=max_queue_chunks)
         self._stream: Any | None = None
         self._closed = True
+        # Chunks thrown away because the consumer fell behind and the queue was full.
+        self.dropped_chunks = 0
 
     def __enter__(self) -> "MicrophoneAudioStream":
         try:
@@ -89,6 +91,7 @@ class MicrophoneAudioStream:
         except queue.Full:
             try:
                 self._queue.get_nowait()
+                self.dropped_chunks += 1
             except queue.Empty:
                 pass
             self._queue.put_nowait(chunk)
