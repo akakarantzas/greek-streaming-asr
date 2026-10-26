@@ -1,10 +1,7 @@
 from __future__ import annotations
 
 import sys
-import tempfile
 import types
-from contextlib import contextmanager
-from pathlib import Path
 
 import pytest
 
@@ -30,45 +27,34 @@ def test_windows_path_is_treated_as_local_path() -> None:
     assert _looks_like_local_nemo_path(r"checkpoints\model.nemo")
 
 
-def test_validate_local_nemo_path_accepts_existing_nemo_file() -> None:
-    with _workspace_temp_dir() as temp_dir:
-        checkpoint = temp_dir / "model.nemo"
-        checkpoint.write_text("placeholder")
+def test_validate_local_nemo_path_accepts_existing_nemo_file(tmp_path) -> None:
+    checkpoint = tmp_path / "model.nemo"
+    checkpoint.write_text("placeholder")
 
-        assert _validate_local_nemo_path(str(checkpoint)) == checkpoint
-
-
-def test_validate_local_nemo_path_rejects_missing_checkpoint() -> None:
-    with _workspace_temp_dir() as temp_dir:
-        with pytest.raises(FileNotFoundError, match="does not exist"):
-            _validate_local_nemo_path(str(temp_dir / "missing.nemo"))
+    assert _validate_local_nemo_path(str(checkpoint)) == checkpoint
 
 
-def test_validate_local_nemo_path_rejects_non_nemo_file() -> None:
-    with _workspace_temp_dir() as temp_dir:
-        checkpoint = temp_dir / "model.ckpt"
-        checkpoint.write_text("placeholder")
-
-        with pytest.raises(ValueError, match=".nemo suffix"):
-            _validate_local_nemo_path(str(checkpoint))
+def test_validate_local_nemo_path_rejects_missing_checkpoint(tmp_path) -> None:
+    with pytest.raises(FileNotFoundError, match="does not exist"):
+        _validate_local_nemo_path(str(tmp_path / "missing.nemo"))
 
 
-def test_validate_local_nemo_path_rejects_directory() -> None:
-    with _workspace_temp_dir() as temp_dir:
-        checkpoint = temp_dir / "model.nemo"
-        checkpoint.mkdir()
+def test_validate_local_nemo_path_rejects_non_nemo_file(tmp_path) -> None:
+    checkpoint = tmp_path / "model.ckpt"
+    checkpoint.write_text("placeholder")
 
-        with pytest.raises(ValueError, match="must be a file"):
-            _validate_local_nemo_path(str(checkpoint))
+    with pytest.raises(ValueError, match=".nemo suffix"):
+        _validate_local_nemo_path(str(checkpoint))
 
 
-@contextmanager
-def _workspace_temp_dir():
-    with tempfile.TemporaryDirectory(
-        prefix="model_loader_",
-        dir=Path.cwd() / "tests",
-    ) as temp_dir:
-        yield Path(temp_dir)
+def test_validate_local_nemo_path_rejects_directory(tmp_path) -> None:
+    checkpoint = tmp_path / "model.nemo"
+    checkpoint.mkdir()
+
+    with pytest.raises(ValueError, match="must be a file"):
+        _validate_local_nemo_path(str(checkpoint))
+
+
 
 
 def test_gpu_memory_is_none_when_torch_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
