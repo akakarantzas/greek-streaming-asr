@@ -1,4 +1,4 @@
-# Multilingual Streaming ASR
+# Greek Streaming ASR
 
 [![tests](https://github.com/akakarantzas/multilingual-streaming-asr/actions/workflows/tests.yml/badge.svg)](https://github.com/akakarantzas/multilingual-streaming-asr/actions/workflows/tests.yml)
 
