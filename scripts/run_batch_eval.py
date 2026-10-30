@@ -56,7 +56,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--summary-output",
         default=None,
-        help="Output summary JSON path. Defaults to experiments/baseline/{language}_summary.json.",
+        help="Output summary JSON path. Defaults to <output>_summary.json next to the CSV.",
     )
     parser.add_argument(
         "--device",
@@ -152,7 +152,12 @@ def run_batch_eval(
     _attach_metric_to_rows(per_file_rows, summary)
     _write_csv(output_path, per_file_rows)
 
-    summary_path = Path(summary_output or f"experiments/baseline/{language}_summary.json")
+    # Next to the CSV by default, so evaluating a second test set never overwrites the first summary.
+    summary_path = (
+        Path(summary_output)
+        if summary_output
+        else output_path.with_name(f"{output_path.stem}_summary.json")
+    )
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 

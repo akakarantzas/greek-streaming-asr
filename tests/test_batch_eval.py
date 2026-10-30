@@ -150,3 +150,27 @@ def test_attach_metric_to_rows_adds_accent_insensitive_wer() -> None:
 
     assert rows[0]["wer"] == 1.0
     assert rows[0]["wer_no_accents"] == 0.0
+
+
+def test_each_results_csv_gets_its_own_summary(tmp_path) -> None:
+    manifest = tmp_path / "manifest.jsonl"
+    manifest.write_text(
+        json.dumps({"audio_filepath": "a.wav", "text": "γεια σου"}) + "\n", encoding="utf-8"
+    )
+
+    for name, transcript in (("fleurs", "γεια σου"), ("cv", "γεια")):
+        run_batch_eval(
+            manifest_path=str(manifest),
+            model_id_or_path="model",
+            language="el",
+            target_lang="el-GR",
+            output=str(tmp_path / f"{name}.csv"),
+            device="cpu",
+            validate_files=False,
+            inference_fn=lambda _row, transcript=transcript: {"transcript": transcript},
+        )
+
+    fleurs = json.loads((tmp_path / "fleurs_summary.json").read_text(encoding="utf-8"))
+    cv = json.loads((tmp_path / "cv_summary.json").read_text(encoding="utf-8"))
+    assert fleurs["metric_value"] == 0.0
+    assert cv["metric_value"] == 0.5

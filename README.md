@@ -167,6 +167,8 @@ Output directories are created automatically by the scripts where needed.
 
 - `reports/environment.json`: environment and dependency check
 - `experiments/baseline/*_results.csv`: per-file transcripts and language-appropriate accuracy metrics
+- `<output>_summary.json` next to each results CSV (e.g. `el_results_summary.json`): headline WER, latency stats, device and GPU
+- `experiments/baseline/single_file_result.json`: single-file inference result
 - `experiments/baseline/profile_*`: latency, memory, and concurrency profiles
 - `reports/figures/`: generated benchmark plots
 

@@ -19,7 +19,7 @@ Fields written by the scripts today, with fields that are not implemented yet li
 - `device` (resolved: `cuda` or `cpu`)
 - `warnings` (JSON list)
 
-## Summary JSON (`scripts/run_batch_eval.py --summary-output`)
+## Summary JSON (`scripts/run_batch_eval.py --summary-output`, default `<output>_summary.json` next to the CSV)
 
 - `language`
 - `num_files`
