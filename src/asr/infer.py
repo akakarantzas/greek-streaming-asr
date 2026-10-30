@@ -196,8 +196,12 @@ def transcribe_file(model: Any, audio_file: Path, target_lang: str) -> dict:
     else:
         args.append(audio_values)
 
-    # Only a named parameter counts as support; **kwargs may silently ignore the hint.
-    target_lang_support = call_has_named_parameter(transcribe, "target_lang")
+    # Supported if named in the signature, or if the transcribe config has the field: NeMo prompt
+    # models read target_lang from **prompt into that config. Plain **kwargs alone proves nothing.
+    get_transcribe_config = getattr(model, "get_transcribe_config", None)
+    target_lang_support = call_has_named_parameter(transcribe, "target_lang") or (
+        callable(get_transcribe_config) and hasattr(get_transcribe_config(), "target_lang")
+    )
     if call_accepts_parameter(transcribe, "target_lang"):
         kwargs["target_lang"] = target_lang
         if not target_lang_support:

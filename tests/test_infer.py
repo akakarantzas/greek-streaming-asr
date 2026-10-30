@@ -32,6 +32,28 @@ def test_extract_transcript_from_list_of_objects_with_text() -> None:
     assert extract_transcript_text(result) == "first\nsecond"
 
 
+def test_target_lang_support_from_a_nemo_style_transcribe_config(tmp_path) -> None:
+    # NeMo prompt models take target_lang through **prompt and keep it in their transcribe config.
+    class PromptConfig:
+        target_lang = None
+
+    class PromptModel:
+        def transcribe(self, audio, **prompt):
+            self.prompt = prompt
+            return ["text"]
+
+        @classmethod
+        def get_transcribe_config(cls):
+            return PromptConfig()
+
+    model = PromptModel()
+    result = transcribe_file(model, tmp_path / "a.wav", "el")
+
+    assert model.prompt == {"target_lang": "el"}
+    assert result["target_lang_support"] is True
+    assert result["warnings"] == []
+
+
 def test_extract_transcript_rejects_unknown_result_type() -> None:
     with pytest.raises(RuntimeError, match="Could not extract transcript text"):
         extract_transcript_text(object())
