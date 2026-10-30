@@ -11,13 +11,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from src.asr.infer import GREEK_TARGET_LANG  # noqa: E402
 from src.asr.model_loader import DEFAULT_MODEL_ID, load_model, resolve_device  # noqa: E402
 from src.eval.manifest import load_jsonl_manifest  # noqa: E402
 from src.profiling.gpu_metrics import concurrency_test, profile_inference  # noqa: E402
 
 
 LANGUAGE_CHOICES = ("el",)
-TARGET_LANG_CHOICES = ("el-GR",)
+TARGET_LANG_CHOICES = (GREEK_TARGET_LANG,)
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -33,9 +34,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--language", required=True, choices=LANGUAGE_CHOICES)
     parser.add_argument(
         "--target-lang",
-        default="el-GR",
+        default=GREEK_TARGET_LANG,
         choices=TARGET_LANG_CHOICES,
-        help="Target language hint. Use el-GR for Greek.",
+        help="Target language hint. Use el for Greek.",
     )
     parser.add_argument("--output-dir", required=True, help="Directory for benchmark JSON files.")
     parser.add_argument(

@@ -18,7 +18,7 @@ def test_parser_defaults() -> None:
     assert args.chunk_ms == 100
     assert args.inference_window_ms == 1000
     assert args.language == "el"
-    assert args.target_lang == "el-GR"
+    assert args.target_lang == "el"
     assert args.device == "auto"
     assert args.max_seconds is None
 
@@ -36,7 +36,7 @@ def test_parser_overrides() -> None:
             "--language",
             "el",
             "--target-lang",
-            "el-GR",
+            "el",
             "--device",
             "cpu",
             "--max-seconds",
@@ -48,7 +48,7 @@ def test_parser_overrides() -> None:
     assert args.chunk_ms == 200
     assert args.inference_window_ms == 1500
     assert args.language == "el"
-    assert args.target_lang == "el-GR"
+    assert args.target_lang == "el"
     assert args.device == "cpu"
     assert args.max_seconds == 5
 

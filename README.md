@@ -100,21 +100,21 @@ python -m src.asr.infer --audio path/to/audio.wav --output experiments/baseline/
 Run evaluation:
 
 ```bash
-python scripts/run_batch_eval.py --manifest data/fleurs/el_gr_test.jsonl --language el --target-lang el-GR --output experiments/baseline/el_results.csv
+python scripts/run_batch_eval.py --manifest data/fleurs/el_gr_test.jsonl --language el --target-lang el --output experiments/baseline/el_results.csv
 ```
 
-`--language` and `--target-lang` must agree: the only supported pair is `el` with `el-GR`. The streaming demo and single-file inference also accept `--target-lang auto`.
+Greek uses `--language el` with `--target-lang el` (the default). NeMo matches the bare code `el` to a model's `el-GR` prompt too, so the same value works for every Greek-capable model. The streaming demo and single-file inference also accept `--target-lang auto`.
 
 Run the streaming demo:
 
 ```bash
-python scripts/run_streaming_demo.py --language el --target-lang el-GR
+python scripts/run_streaming_demo.py --language el --target-lang el
 ```
 
 Profile and plot:
 
 ```bash
-python scripts/profile_inference.py --manifest data/fleurs/el_gr_test_first10.jsonl --language el --target-lang el-GR --output-dir experiments/baseline/profile_el
+python scripts/profile_inference.py --manifest data/fleurs/el_gr_test_first10.jsonl --language el --target-lang el --output-dir experiments/baseline/profile_el
 python scripts/make_benchmark_plots.py --input-dir experiments/baseline/profile_el --output-dir reports/figures
 ```
 
