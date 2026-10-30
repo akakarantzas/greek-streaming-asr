@@ -80,7 +80,7 @@ python -m pip install -r requirements.txt
 
 ## Usage
 
-The manifest paths below are examples. Replace them with your local manifest paths.
+The manifests below are the FLEURS Greek ones made by `scripts/prepare_fleurs.py` (see Data); swap in your own as needed.
 
 Validate setup:
 
@@ -100,7 +100,7 @@ python -m src.asr.infer --audio path/to/audio.wav --output experiments/baseline/
 Run evaluation:
 
 ```bash
-python scripts/run_batch_eval.py --manifest data/manifests/el.jsonl --language el --target-lang el-GR --output experiments/baseline/el_results.csv
+python scripts/run_batch_eval.py --manifest data/fleurs/el_gr_test.jsonl --language el --target-lang el-GR --output experiments/baseline/el_results.csv
 ```
 
 `--language` and `--target-lang` must agree: the only supported pair is `el` with `el-GR`. The streaming demo and single-file inference also accept `--target-lang auto`.
@@ -114,14 +114,16 @@ python scripts/run_streaming_demo.py --language el --target-lang el-GR
 Profile and plot:
 
 ```bash
-python scripts/profile_inference.py --manifest data/manifests/el.jsonl --language el --target-lang el-GR --output-dir experiments/baseline/profile_el
+python scripts/profile_inference.py --manifest data/fleurs/el_gr_test_first10.jsonl --language el --target-lang el-GR --output-dir experiments/baseline/profile_el
 python scripts/make_benchmark_plots.py --input-dir experiments/baseline/profile_el --output-dir reports/figures
 ```
+
+Profiling transcribes every file once, then the concurrency test runs every file once per stream at each stream count (1 + 2 + 4 + 8 by default). Keep its manifest small: the full 650-clip test set means about 10,400 transcriptions.
 
 Validate fine-tuning inputs (does not start training):
 
 ```bash
-python experiments/finetuning/validate_finetuning_inputs.py --train-manifest data/manifests/el_gr_train.jsonl --val-manifest data/manifests/el_gr_val.jsonl
+python experiments/finetuning/validate_finetuning_inputs.py --train-manifest data/fleurs/el_gr_train.jsonl --val-manifest data/fleurs/el_gr_dev.jsonl
 ```
 
 Run tests (no GPU needed; `requirements-test.txt` is enough, and CI uses it on Python 3.11 and 3.12):
@@ -159,7 +161,7 @@ To get the FLEURS Greek test set (650 clips, 349 MB download) as audio plus a re
 python scripts/prepare_fleurs.py --split test
 ```
 
-Add `--limit 10` for a quick smoke-run set; it writes `el_gr_test_first10.jsonl`, so it never replaces the full manifest. Re-running skips files that are already downloaded.
+Add `--limit 10` for a quick smoke-run set; it writes `el_gr_test_first10.jsonl`, so it never replaces the full manifest. Re-running skips files that are already downloaded. `--split train` and `--split dev` write `el_gr_train.jsonl` and `el_gr_dev.jsonl` for fine-tuning.
 
 ## Outputs
 
