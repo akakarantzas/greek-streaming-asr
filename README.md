@@ -128,7 +128,6 @@ Run tests (no GPU needed; `requirements-test.txt` is enough, and CI uses it on P
 
 ```bash
 python -m pip install -r requirements-test.txt
-python -m pip install ruff
 python -m ruff check .
 pytest
 ```
