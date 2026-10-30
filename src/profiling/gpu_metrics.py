@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
-from src.asr.infer import transcribe_file
+from src.asr.infer import GREEK_TARGET_LANG, transcribe_file
 from src.asr.model_loader import get_gpu_memory_allocated_mb, get_gpu_name
 from src.profiling.stats import mean as _mean
 from src.profiling.stats import percentile as _percentile
@@ -40,7 +40,7 @@ def profile_inference(
     model: Any,
     audio_inputs: list,
     label: str,
-    target_lang: str = "el-GR",
+    target_lang: str = GREEK_TARGET_LANG,
 ) -> dict:
     limitations = [
         "Local process inference profile; not a production serving benchmark.",
@@ -83,7 +83,7 @@ def concurrency_test(
     model: Any,
     audio_inputs: list,
     stream_counts: Sequence[int] = (1, 2, 4, 8),
-    target_lang: str = "el-GR",
+    target_lang: str = GREEK_TARGET_LANG,
 ) -> list[dict]:
     if not stream_counts:
         return []
@@ -174,7 +174,7 @@ def _run_concurrent_streams(
     model: Any,
     audio_inputs: list,
     stream_count: int,
-    target_lang: str = "el-GR",
+    target_lang: str = GREEK_TARGET_LANG,
 ) -> list[float]:
     latencies: list[float] = []
     errors: list[BaseException] = []

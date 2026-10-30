@@ -12,7 +12,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.asr.infer import language_readiness_for, transcribe_file
+from src.asr.infer import GREEK_TARGET_LANG, language_readiness_for, transcribe_file
 from src.asr.model_loader import (
     DEFAULT_MODEL_ID,
     get_gpu_name,
@@ -27,7 +27,7 @@ from src.profiling.stats import percentile
 
 
 LANGUAGE_CHOICES = ("el",)
-TARGET_LANG_CHOICES = ("el-GR",)
+TARGET_LANG_CHOICES = (GREEK_TARGET_LANG,)
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -48,7 +48,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--target-lang",
-        default="el-GR",
+        default=GREEK_TARGET_LANG,
         choices=TARGET_LANG_CHOICES,
         help="Target language hint passed to inference when supported.",
     )
@@ -260,8 +260,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _validate_language_target(language: str, target_lang: str) -> None:
-    if language == "el" and target_lang != "el-GR":
-        raise ValueError("Greek evaluation requires --target-lang el-GR")
+    if language == "el" and target_lang != GREEK_TARGET_LANG:
+        raise ValueError(f"Greek evaluation requires --target-lang {GREEK_TARGET_LANG}")
     if language not in LANGUAGE_CHOICES:
         raise ValueError(f"Unsupported language: {language}")
 

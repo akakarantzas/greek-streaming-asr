@@ -1,6 +1,6 @@
 # Greek Fine-Tuning Preparation
 
-Goal: compare exploratory base-model Greek output against Greek fine-tuned model output for `el-GR`.
+Goal: compare exploratory base-model Greek output against Greek fine-tuned model output for Greek (`el`).
 
 Required data:
 - Train manifest
@@ -28,4 +28,4 @@ Honest-results rule:
 - Do not invent WER improvements.
 - Report base-model and fine-tuned model results on the same held-out test manifest.
 
-Greek readiness rule: do not claim production Greek support unless measured fine-tuned results justify it. Until then, Greek `el-GR` remains adaptation-ready/exploratory.
+Greek readiness rule: do not claim production Greek support unless measured fine-tuned results justify it. Until then, Greek (`el`) remains adaptation-ready/exploratory.

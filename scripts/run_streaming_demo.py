@@ -11,6 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from src.asr.infer import GREEK_TARGET_LANG  # noqa: E402
 from src.asr.model_loader import (  # noqa: E402
     DEFAULT_MODEL_ID,
     get_gpu_name,
@@ -24,7 +25,7 @@ from src.profiling.stats import percentile  # noqa: E402
 
 
 LANGUAGE_CHOICES = ("el",)
-TARGET_LANG_CHOICES = ("el-GR", "auto")
+TARGET_LANG_CHOICES = (GREEK_TARGET_LANG, "auto")
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -57,7 +58,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--target-lang",
         choices=TARGET_LANG_CHOICES,
-        default="el-GR",
+        default=GREEK_TARGET_LANG,
         help="Target language hint for ASR when supported.",
     )
     parser.add_argument(

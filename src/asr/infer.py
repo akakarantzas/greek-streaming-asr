@@ -18,14 +18,16 @@ from src.asr.model_loader import (
 
 DEFAULT_OUTPUT_PATH = "experiments/baseline/single_file_result.json"
 ALLOWED_AUDIO_SUFFIXES = {".wav", ".flac"}
-ALLOWED_TARGET_LANGS = {"el-GR", "auto"}
+# The bare code, not "el-GR": NeMo matches it to either form, so it works for every Greek model.
+GREEK_TARGET_LANG = "el"
+ALLOWED_TARGET_LANGS = {GREEK_TARGET_LANG, "auto"}
 
 
 def run_single_file_inference(
     audio_path: str,
     model_id_or_path: str,
     output_path: str | None = None,
-    target_lang: str = "el-GR",
+    target_lang: str = GREEK_TARGET_LANG,
     device: str = "auto",
 ) -> dict:
     device = resolve_device(device)
@@ -83,7 +85,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--target-lang",
-        default="el-GR",
+        default=GREEK_TARGET_LANG,
         choices=sorted(ALLOWED_TARGET_LANGS),
         help="Initial target language hint.",
     )
@@ -162,11 +164,11 @@ def validate_target_lang(target_lang: str) -> None:
 
 def language_readiness_for(target_lang: str) -> tuple[str, list[str]]:
     """The one readiness label and warning per target language, used by every output."""
-    if target_lang == "el-GR":
+    if target_lang == GREEK_TARGET_LANG:
         return (
             "adaptation_ready",
             [
-                "Greek el-GR output is exploratory/adaptation-ready; quality is not confirmed "
+                "Greek (el) output is exploratory/adaptation-ready; quality is not confirmed "
                 "until a fine-tuned model is evaluated."
             ],
         )

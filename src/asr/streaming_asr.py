@@ -9,6 +9,7 @@ from typing import Any, Callable, Iterable, Iterator
 import numpy as np
 
 from src.asr.infer import (
+    GREEK_TARGET_LANG,
     extract_transcript_text,
     language_readiness_for,
     transcribe_file,
@@ -55,7 +56,7 @@ class ChunkedASRSession:
         self,
         model: Any,
         sample_rate: int = DEFAULT_SAMPLE_RATE,
-        target_lang: str = "el-GR",
+        target_lang: str = GREEK_TARGET_LANG,
         inference_interval_s: float = DEFAULT_INFERENCE_INTERVAL_S,
         max_buffer_duration_s: float = DEFAULT_MAX_BUFFER_DURATION_S,
         clock: Callable[[], float] = time.perf_counter,

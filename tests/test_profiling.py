@@ -134,7 +134,7 @@ def test_profile_inference_uses_transcribe_on_callable_model(monkeypatch) -> Non
         label="fake",
     )
 
-    assert model.calls == [(["a.wav"], "el-GR"), (["b.wav"], "el-GR")]
+    assert model.calls == [(["a.wav"], "el"), (["b.wav"], "el")]
     assert result["label"] == "fake"
     assert result["num_inputs"] == 2
     assert result["per_input_latencies_ms"] == pytest.approx([100.0, 300.0])
@@ -164,12 +164,12 @@ def test_profile_inference_uses_transcribe_adapter_with_target_lang(monkeypatch)
     result = gpu_metrics.profile_inference(
         model=FakeModel(),
         audio_inputs=["sample.wav"],
-        label="el:el-GR",
-        target_lang="el-GR",
+        label="el:el",
+        target_lang="el",
     )
 
-    assert calls == [(["sample.wav"], "el-GR")]
-    assert result["target_lang"] == "el-GR"
+    assert calls == [(["sample.wav"], "el")]
+    assert result["target_lang"] == "el"
     assert result["warnings"] == []
     assert result["per_input_latencies_ms"] == pytest.approx([250.0])
 

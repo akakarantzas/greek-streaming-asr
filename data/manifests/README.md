@@ -15,7 +15,7 @@ Example Greek row:
 {"audio_filepath": "data/samples/el_gr_sample.wav", "text": "Αυτό είναι ένα ελληνικό κείμενο αναφοράς.", "duration": 4.1}
 ```
 
-Greek `el-GR` is adaptation-ready/exploratory until fine-tuning and evaluation results are measured.
+Greek (`el`) is adaptation-ready/exploratory until fine-tuning and evaluation results are measured.
 
 Future Cantonese (Yue) example, not part of the current Greek core milestone:
 

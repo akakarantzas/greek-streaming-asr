@@ -48,7 +48,7 @@ def test_chunked_session_emits_event_with_rtf_and_metadata() -> None:
     session = ChunkedASRSession(
         model=model,
         sample_rate=10,
-        target_lang="el-GR",
+        target_lang="el",
         inference_interval_s=0.2,
         max_buffer_duration_s=1.0,
         clock=lambda: next(clock_values),
@@ -64,9 +64,9 @@ def test_chunked_session_emits_event_with_rtf_and_metadata() -> None:
     assert event["rtf"] == pytest.approx(1.0)
     assert event["audio_duration_s"] == 0.2
     assert event["mode"] == "chunked_fallback"
-    assert event["target_lang"] == "el-GR"
+    assert event["target_lang"] == "el"
     assert event["language_readiness"] == "adaptation_ready"
-    assert model.calls[0]["target_lang"] == "el-GR"
+    assert model.calls[0]["target_lang"] == "el"
 
 
 def test_chunked_session_waits_until_inference_interval() -> None:
@@ -89,7 +89,7 @@ def test_greek_session_labels_events_as_adaptation_ready() -> None:
     session = ChunkedASRSession(
         model=FakeTranscribeModel(),
         sample_rate=10,
-        target_lang="el-GR",
+        target_lang="el",
         inference_interval_s=0.1,
         clock=lambda: next(clock_values),
         timestamp_fn=lambda: "2026-01-01T00:00:00+00:00",
