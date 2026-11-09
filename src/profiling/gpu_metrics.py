@@ -50,6 +50,9 @@ def profile_inference(
     per_input_latencies_ms: list[float] = []
     warnings: list[str] = []
 
+    # One untimed call first: the first call pays one-time GPU setup that would skew p95.
+    if audio_inputs:
+        _time_model_call(model=model, audio_input=audio_inputs[0], target_lang=target_lang, warnings=warnings)
     _reset_peak_memory()
     for audio_input in audio_inputs:
         per_input_latencies_ms.append(

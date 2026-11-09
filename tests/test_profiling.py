@@ -114,7 +114,8 @@ def test_profile_inference_uses_transcribe_on_callable_model(monkeypatch) -> Non
             self.calls.append((audio, target_lang))
             return ["transcript"]
 
-    times = iter([1.0, 1.1, 2.0, 2.3])
+    # The first pair is the untimed warm-up call.
+    times = iter([0.0, 5.0, 1.0, 1.1, 2.0, 2.3])
 
     def fake_snapshot():
         return {
@@ -134,7 +135,7 @@ def test_profile_inference_uses_transcribe_on_callable_model(monkeypatch) -> Non
         label="fake",
     )
 
-    assert model.calls == [(["a.wav"], "el"), (["b.wav"], "el")]
+    assert model.calls == [(["a.wav"], "el"), (["a.wav"], "el"), (["b.wav"], "el")]
     assert result["label"] == "fake"
     assert result["num_inputs"] == 2
     assert result["per_input_latencies_ms"] == pytest.approx([100.0, 300.0])
@@ -145,7 +146,7 @@ def test_profile_inference_uses_transcribe_on_callable_model(monkeypatch) -> Non
 
 def test_profile_inference_uses_transcribe_adapter_with_target_lang(monkeypatch) -> None:
     calls: list[tuple[list[str], str]] = []
-    times = iter([1.0, 1.25])
+    times = iter([0.0, 5.0, 1.0, 1.25])
 
     class FakeModel:
         def transcribe(self, paths2audio_files, target_lang):
@@ -168,7 +169,7 @@ def test_profile_inference_uses_transcribe_adapter_with_target_lang(monkeypatch)
         target_lang="el",
     )
 
-    assert calls == [(["sample.wav"], "el")]
+    assert calls == [(["sample.wav"], "el")] * 2
     assert result["target_lang"] == "el"
     assert result["warnings"] == []
     assert result["per_input_latencies_ms"] == pytest.approx([250.0])

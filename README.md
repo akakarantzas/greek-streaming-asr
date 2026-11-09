@@ -118,7 +118,7 @@ python scripts/profile_inference.py --manifest data/fleurs/el_gr_test_first10.js
 python scripts/make_benchmark_plots.py --input-dir experiments/baseline/profile_el --output-dir reports/figures
 ```
 
-Profiling transcribes every file once, then the concurrency test runs every file once per stream at each stream count (1 + 2 + 4 + 8 by default). Keep its manifest small: the full 650-clip test set means about 10,400 transcriptions.
+Profiling makes one untimed warm-up call, transcribes every file once, then the concurrency test runs every file once per stream at each stream count (1 + 2 + 4 + 8 by default). Keep its manifest small: the full 650-clip test set means about 10,400 transcriptions.
 
 Validate fine-tuning inputs (does not start training):
 

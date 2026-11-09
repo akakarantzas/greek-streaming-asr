@@ -98,6 +98,9 @@ def run_batch_eval(
                 target_lang=target_lang,
             )
 
+        # One untimed call first: the first call pays one-time GPU setup that would skew latency stats.
+        inference_fn(manifest_rows[0])
+
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     per_file_rows: list[dict] = []

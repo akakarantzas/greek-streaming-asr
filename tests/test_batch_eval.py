@@ -174,3 +174,36 @@ def test_each_results_csv_gets_its_own_summary(tmp_path) -> None:
     cv = json.loads((tmp_path / "cv_summary.json").read_text(encoding="utf-8"))
     assert fleurs["metric_value"] == 0.0
     assert cv["metric_value"] == 0.5
+
+
+def test_first_call_is_a_warm_up_and_not_timed(tmp_path, monkeypatch) -> None:
+    import scripts.run_batch_eval as batch_eval
+
+    manifest = tmp_path / "manifest.jsonl"
+    manifest.write_text(
+        "".join(json.dumps({"audio_filepath": f"{name}.wav", "text": "γεια"}) + "\n" for name in "ab"),
+        encoding="utf-8",
+    )
+    latencies = iter([5000.0, 100.0, 200.0])
+    calls: list[str] = []
+
+    def fake_transcribe_file(model, audio_file, target_lang):
+        calls.append(audio_file.name)
+        return {"transcript": "γεια", "latency_ms": next(latencies), "warnings": []}
+
+    monkeypatch.setattr(batch_eval, "load_model", lambda **_kwargs: object())
+    monkeypatch.setattr(batch_eval, "transcribe_file", fake_transcribe_file)
+
+    summary = run_batch_eval(
+        manifest_path=str(manifest),
+        model_id_or_path="model",
+        language="el",
+        target_lang="el",
+        output=str(tmp_path / "results.csv"),
+        device="cpu",
+        validate_files=False,
+    )
+
+    assert calls == ["a.wav", "a.wav", "b.wav"]
+    assert summary["num_files"] == 2
+    assert summary["avg_latency_ms"] == 150.0
