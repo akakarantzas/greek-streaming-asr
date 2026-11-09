@@ -86,7 +86,6 @@ def run_demo(args: argparse.Namespace) -> int:
         sample_rate=DEFAULT_SAMPLE_RATE,
         target_lang=args.target_lang,
         inference_interval_s=inference_window_s,
-        log_events=False,
     )
     print_startup_header(
         model_id_or_path=args.model_id_or_path,

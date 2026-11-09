@@ -4,7 +4,7 @@ import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator
+from typing import Any, Callable
 
 import numpy as np
 
@@ -60,7 +60,6 @@ class ChunkedASRSession:
         max_buffer_duration_s: float = DEFAULT_MAX_BUFFER_DURATION_S,
         clock: Callable[[], float] = time.perf_counter,
         timestamp_fn: Callable[[], str] | None = None,
-        log_events: bool = True,
     ) -> None:
         validate_target_lang(target_lang)
         if sample_rate <= 0:
@@ -78,7 +77,6 @@ class ChunkedASRSession:
         self.buffer = RollingAudioBuffer(max_samples=int(sample_rate * max_buffer_duration_s))
         self.clock = clock
         self.timestamp_fn = timestamp_fn or _utc_timestamp
-        self.log_events = log_events
         # Native (cache-aware) streaming is not wired up until the model's API is confirmed.
         self.mode = "chunked_fallback"
         self.language_readiness, self.session_warnings = language_readiness_for(target_lang)
@@ -97,12 +95,6 @@ class ChunkedASRSession:
         new_audio_s = self._samples_since_inference / self.sample_rate
         self._samples_since_inference = 0
         return self._run_inference_event(new_audio_s)
-
-    def process_chunks(self, chunks: Iterable[np.ndarray]) -> Iterator[dict]:
-        for chunk in chunks:
-            event = self.process_chunk(chunk)
-            if event is not None:
-                yield event
 
     def _run_inference_event(self, new_audio_s: float) -> dict:
         audio = self.buffer.audio
@@ -126,11 +118,6 @@ class ChunkedASRSession:
             "language_readiness": self.language_readiness,
             "warnings": warnings,
         }
-        if self.log_events:
-            print(
-                f"[{event['timestamp']}] partial transcript: {event['transcript']} "
-                f"(latency_ms={event['latency_ms']:.2f}, rtf={event['rtf']:.3f}, mode={event['mode']})"
-            )
         return event
 
     def _run_chunked_fallback(self, audio: np.ndarray, warnings: list[str]) -> str:

@@ -111,7 +111,6 @@ def test_rtf_is_measured_against_new_audio_not_the_whole_buffer() -> None:
         inference_interval_s=1.0,
         max_buffer_duration_s=10.0,
         clock=lambda: next(clock_values),
-        log_events=False,
     )
 
     events = [session.process_chunk(np.zeros(10, dtype=np.float32)) for _ in range(10)]
@@ -126,7 +125,7 @@ def test_streaming_warns_like_batch_when_target_lang_only_reaches_kwargs() -> No
             return ["partial text"]
 
     session = ChunkedASRSession(
-        model=KwargsModel(), sample_rate=10, inference_interval_s=0.1, log_events=False
+        model=KwargsModel(), sample_rate=10, inference_interval_s=0.1
     )
 
     event = session.process_chunk(np.array([0.1], dtype=np.float32))
