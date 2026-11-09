@@ -96,8 +96,9 @@ class ChunkedASRSession:
         if self._samples_since_inference < self.inference_interval_samples:
             return None
 
+        new_audio_s = self._samples_since_inference / self.sample_rate
         self._samples_since_inference = 0
-        return self._run_inference_event()
+        return self._run_inference_event(new_audio_s)
 
     def process_chunks(self, chunks: Iterable[np.ndarray]) -> Iterator[dict]:
         for chunk in chunks:
@@ -105,7 +106,7 @@ class ChunkedASRSession:
             if event is not None:
                 yield event
 
-    def _run_inference_event(self) -> dict:
+    def _run_inference_event(self, new_audio_s: float) -> dict:
         audio = self.buffer.audio
         audio_duration_s = self.buffer.duration_s(self.sample_rate)
         warnings = list(self.session_warnings)
@@ -118,7 +119,9 @@ class ChunkedASRSession:
             "transcript": transcript,
             "timestamp": self.timestamp_fn(),
             "latency_ms": processing_time_s * 1000,
-            "rtf": calculate_rtf(processing_time_s, audio_duration_s),
+            # Each event re-reads the whole buffer, but only new_audio_s arrived since the last one:
+            # below 1 means the session keeps up with the microphone.
+            "rtf": calculate_rtf(processing_time_s, new_audio_s),
             "audio_duration_s": audio_duration_s,
             "mode": self.mode,
             "target_lang": self.target_lang,

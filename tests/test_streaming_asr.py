@@ -100,3 +100,21 @@ def test_greek_session_labels_events_as_adaptation_ready() -> None:
     assert event is not None
     assert event["language_readiness"] == "adaptation_ready"
     assert "exploratory" in event["warnings"][0]
+
+
+def test_rtf_is_measured_against_new_audio_not_the_whole_buffer() -> None:
+    # 1 s of new audio per event, 10 s buffer, 1.5 s per call: the session falls behind.
+    clock_values = iter([0.0] * 18 + [0.0, 1.5])
+    session = ChunkedASRSession(
+        model=FakeTranscribeModel(),
+        sample_rate=10,
+        inference_interval_s=1.0,
+        max_buffer_duration_s=10.0,
+        clock=lambda: next(clock_values),
+        log_events=False,
+    )
+
+    events = [session.process_chunk(np.zeros(10, dtype=np.float32)) for _ in range(10)]
+
+    assert events[-1]["audio_duration_s"] == 10.0
+    assert events[-1]["rtf"] == pytest.approx(1.5)
