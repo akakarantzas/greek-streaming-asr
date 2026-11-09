@@ -131,3 +131,32 @@ def test_streaming_warns_like_batch_when_target_lang_only_reaches_kwargs() -> No
     event = session.process_chunk(np.array([0.1], dtype=np.float32))
 
     assert any("unverified" in warning for warning in event["warnings"])
+
+
+def test_model_without_audio_parameter_gets_a_temporary_wav(monkeypatch) -> None:
+    import sys
+    import types
+    from pathlib import Path
+
+    written: list[tuple[Path, int]] = []
+
+    def fake_write(path, audio, sample_rate):
+        Path(path).write_bytes(b"RIFF")
+        written.append((Path(path), sample_rate))
+
+    monkeypatch.setitem(sys.modules, "soundfile", types.SimpleNamespace(write=fake_write))
+    seen: list[tuple[bool, str]] = []
+
+    class PathOnlyModel:
+        def transcribe(self, paths2audio_files, target_lang):
+            seen.append((Path(paths2audio_files[0]).exists(), target_lang))
+            return ["from wav"]
+
+    session = ChunkedASRSession(model=PathOnlyModel(), sample_rate=10, inference_interval_s=0.1)
+
+    event = session.process_chunk(np.array([0.1], dtype=np.float32))
+
+    assert event["transcript"] == "from wav"
+    assert seen == [(True, "el")]
+    assert written[0][1] == 10
+    assert not written[0][0].exists()
