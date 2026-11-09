@@ -144,10 +144,10 @@ Then open http://localhost:8765.
 
 ## Data
 
-Evaluation manifests are JSONL files:
+Evaluation manifests are JSONL files. In `audio_filepath`, a relative path is read from the manifest's own folder, not from where the script runs; absolute paths work too. This row is from a manifest in `data/manifests/`:
 
 ```json
-{"audio_filepath": "data/samples/el_gr_sample.wav", "text": "Reference transcript.", "duration": 3.2}
+{"audio_filepath": "../samples/el_gr_sample.wav", "text": "Reference transcript.", "duration": 3.2}
 ```
 
 Single-file inference accepts `.wav` or `.flac`. Validation for sample rate and channels is not finalized yet and should be settled before benchmark results are treated as final.

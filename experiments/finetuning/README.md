@@ -7,14 +7,14 @@ Required data:
 - Validation manifest
 - Held-out test manifest for final reporting
 
-Expected manifest format is JSONL with one object per line:
+Expected manifest format is JSONL with one object per line (this row is from a manifest in `data/manifests/`):
 
 ```json
-{"audio_filepath": "data/samples/el_gr_train_001.wav", "text": "Αυτό είναι ένα ελληνικό κείμενο αναφοράς.", "duration": 3.2}
+{"audio_filepath": "../samples/el_gr_train_001.wav", "text": "Αυτό είναι ένα ελληνικό κείμενο αναφοράς.", "duration": 3.2}
 ```
 
 Required fields:
-- `audio_filepath`: non-empty path to the audio file
+- `audio_filepath`: non-empty path to the audio file. A relative path is read from the manifest's own folder, not from where the script runs; absolute paths work too
 - `text`: non-empty Greek reference transcript
 
 Optional fields:
