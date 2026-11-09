@@ -206,3 +206,10 @@ def test_peak_memory_is_none_without_cuda(monkeypatch) -> None:
 
     assert gpu_metrics._peak_memory_allocated_mb() is None
 
+
+
+def test_nvidia_smi_snapshot_returns_none_when_it_hangs() -> None:
+    def hanging_runner(command, **kwargs):
+        raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+
+    assert gpu_metrics._nvidia_smi_snapshot(runner=hanging_runner) is None

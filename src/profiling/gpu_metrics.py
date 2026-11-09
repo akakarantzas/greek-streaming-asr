@@ -275,8 +275,9 @@ def _nvidia_smi_snapshot(
         "--format=csv,noheader,nounits",
     ]
     try:
-        completed = runner(command, capture_output=True, text=True, check=False)
-    except (FileNotFoundError, OSError):
+        # nvidia-smi can hang on a stuck driver; a missing sample beats a run that never ends.
+        completed = runner(command, capture_output=True, text=True, check=False, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
         return None
 
     if completed.returncode != 0:
