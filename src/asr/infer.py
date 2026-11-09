@@ -43,7 +43,10 @@ def run_single_file_inference(
     warnings.extend(transcription["warnings"])
     transcript = transcription["transcript"]
     latency_ms = transcription["latency_ms"]
-    gpu_memory_allocated_mb = transcription["gpu_memory_allocated_mb"]
+    # Empty on a CPU run, even when the machine has a GPU.
+    gpu_memory_allocated_mb = (
+        transcription["gpu_memory_allocated_mb"] if device.startswith("cuda") else None
+    )
 
     result = {
         "audio_filepath": str(audio_file),

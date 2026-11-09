@@ -85,6 +85,8 @@ def run_batch_eval(
 ) -> dict:
     _validate_language_target(language, target_lang)
     device = resolve_device(device)
+    # GPU fields stay empty on a CPU run, even when the machine has a GPU.
+    on_gpu = device.startswith("cuda")
     manifest_rows = load_jsonl_manifest(manifest_path, validate_files=validate_files)
     language_readiness, readiness_warnings = language_readiness_for(target_lang)
 
@@ -123,7 +125,9 @@ def run_batch_eval(
                     "latency_ms": _coerce_float(inference_result.get("latency_ms")),
                     "gpu_memory_allocated_mb": _coerce_float(
                         inference_result.get("gpu_memory_allocated_mb")
-                    ),
+                    )
+                    if on_gpu
+                    else None,
                     "duration": row.get("duration"),
                     "model_id_or_path": model_id_or_path,
                     "device": device,
@@ -151,7 +155,7 @@ def run_batch_eval(
         warnings=warnings,
     )
     summary["device"] = device
-    summary["gpu_name"] = get_gpu_name()
+    summary["gpu_name"] = get_gpu_name() if on_gpu else None
     _attach_metric_to_rows(per_file_rows, summary)
     _write_csv(output_path, per_file_rows)
 

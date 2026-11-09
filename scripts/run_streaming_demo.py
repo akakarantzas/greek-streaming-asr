@@ -97,7 +97,7 @@ def run_demo(args: argparse.Namespace) -> int:
         language_readiness=session.language_readiness,
         readiness_warnings=session.session_warnings,
         device=device,
-        gpu_name=get_gpu_name(),
+        gpu_name=get_gpu_name() if device.startswith("cuda") else None,
         mode=session.mode,
     )
 

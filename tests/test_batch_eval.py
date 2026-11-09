@@ -207,3 +207,27 @@ def test_first_call_is_a_warm_up_and_not_timed(tmp_path, monkeypatch) -> None:
     assert calls == ["a.wav", "a.wav", "b.wav"]
     assert summary["num_files"] == 2
     assert summary["avg_latency_ms"] == 150.0
+
+
+def test_cpu_run_reports_no_gpu_even_when_one_exists(tmp_path, monkeypatch) -> None:
+    import scripts.run_batch_eval as batch_eval
+
+    manifest = tmp_path / "manifest.jsonl"
+    manifest.write_text(json.dumps({"audio_filepath": "a.wav", "text": "γεια"}) + "\n", encoding="utf-8")
+    monkeypatch.setattr(batch_eval, "get_gpu_name", lambda: "NVIDIA GeForce RTX 4060 Ti")
+    output = tmp_path / "results.csv"
+
+    summary = run_batch_eval(
+        manifest_path=str(manifest),
+        model_id_or_path="model",
+        language="el",
+        target_lang="el",
+        output=str(output),
+        device="cpu",
+        validate_files=False,
+        inference_fn=lambda _row: {"transcript": "γεια", "gpu_memory_allocated_mb": 0.0},
+    )
+
+    assert summary["gpu_name"] is None
+    with output.open(encoding="utf-8") as csv_file:
+        assert next(csv.DictReader(csv_file))["gpu_memory_allocated_mb"] == ""

@@ -13,7 +13,7 @@ Fields written by the scripts today, with fields that are not implemented yet li
 - `wer_no_accents`
 - `cer` (empty for Greek, which is scored with WER)
 - `latency_ms`
-- `gpu_memory_allocated_mb`
+- `gpu_memory_allocated_mb` (empty on CPU)
 - `duration` (from the manifest, when present)
 - `model_id_or_path`
 - `device` (resolved: `cuda` or `cpu`)
