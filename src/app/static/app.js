@@ -168,7 +168,9 @@
   // its audio to the server comes with the real source.
   async function startMic() {
     try {
-      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      releaseMic(); // a second click may have opened a stream first; stop it, or the mic stays on
+      micStream = stream;
     } catch (error) {
       resetPanels(false);
       showPanelMessage("Microphone access was blocked or no microphone was found.");
