@@ -4,7 +4,7 @@ import argparse
 import sys
 import time
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Sequence
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +20,7 @@ from src.asr.model_loader import (  # noqa: E402
 )
 from src.asr.streaming_asr import ChunkedASRSession  # noqa: E402
 from src.audio.microphone import DEFAULT_SAMPLE_RATE, MicrophoneAudioStream  # noqa: E402
+from src.profiling.stats import format_optional_float  # noqa: E402
 from src.profiling.stats import mean as _mean  # noqa: E402
 from src.profiling.stats import percentile  # noqa: E402
 
@@ -183,13 +184,13 @@ def print_partial_event(event: dict) -> None:
 
 def print_session_summary(summary: dict) -> None:
     print("Session summary")
-    print(f"total_runtime_s: {_format_optional_float(summary['total_runtime_s'])}")
+    print(f"total_runtime_s: {format_optional_float(summary['total_runtime_s'])}")
     print(f"inference_windows: {summary['inference_windows']}")
-    print(f"avg_latency_ms: {_format_optional_float(summary['avg_latency_ms'])}")
-    print(f"p50_latency_ms: {_format_optional_float(summary['p50_latency_ms'])}")
-    print(f"p95_latency_ms: {_format_optional_float(summary['p95_latency_ms'])}")
-    print(f"avg_rtf: {_format_optional_float(summary['avg_rtf'])}")
-    print(f"dropped_audio_s: {_format_optional_float(summary['dropped_audio_s'])}")
+    print(f"avg_latency_ms: {format_optional_float(summary['avg_latency_ms'])}")
+    print(f"p50_latency_ms: {format_optional_float(summary['p50_latency_ms'])}")
+    print(f"p95_latency_ms: {format_optional_float(summary['p95_latency_ms'])}")
+    print(f"avg_rtf: {format_optional_float(summary['avg_rtf'])}")
+    print(f"dropped_audio_s: {format_optional_float(summary['dropped_audio_s'])}")
     if summary["dropped_audio_s"] > 0:
         # latency_ms only times the model call, so falling behind shows up here instead.
         print(
@@ -212,12 +213,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (RuntimeError, ValueError, ImportError) as exc:
         print(f"Streaming demo failed: {exc}", file=sys.stderr)
         return 1
-
-
-def _format_optional_float(value: Any) -> str:
-    if value is None:
-        return "n/a"
-    return f"{float(value):.3f}"
 
 
 if __name__ == "__main__":

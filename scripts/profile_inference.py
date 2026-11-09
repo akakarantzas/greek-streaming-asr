@@ -15,6 +15,7 @@ from src.asr.infer import GREEK_TARGET_LANG  # noqa: E402
 from src.asr.model_loader import DEFAULT_MODEL_ID, load_model, resolve_device  # noqa: E402
 from src.eval.manifest import load_jsonl_manifest  # noqa: E402
 from src.profiling.gpu_metrics import concurrency_test, profile_inference  # noqa: E402
+from src.profiling.stats import format_optional_float  # noqa: E402
 
 
 LANGUAGE_CHOICES = ("el",)
@@ -102,24 +103,18 @@ def print_profile_summary(profile_summary: dict, concurrency_summary: list[dict]
     print("Inference profile complete")
     print(f"output_dir: {output_dir}")
     print(f"num_inputs: {profile_summary.get('num_inputs')}")
-    print(f"avg_latency_ms: {_format_optional_float(profile_summary.get('avg_latency_ms'))}")
-    print(f"p95_latency_ms: {_format_optional_float(profile_summary.get('p95_latency_ms'))}")
+    print(f"avg_latency_ms: {format_optional_float(profile_summary.get('avg_latency_ms'))}")
+    print(f"p95_latency_ms: {format_optional_float(profile_summary.get('p95_latency_ms'))}")
     if concurrency_summary:
         last = concurrency_summary[-1]
         print(
             "max_stream_count: "
-            f"{last.get('stream_count')} p95_latency_ms={_format_optional_float(last.get('p95_latency_ms'))}"
+            f"{last.get('stream_count')} p95_latency_ms={format_optional_float(last.get('p95_latency_ms'))}"
         )
 
 
 def _write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-
-
-def _format_optional_float(value: object) -> str:
-    if value is None:
-        return "n/a"
-    return f"{float(value):.3f}"
 
 
 if __name__ == "__main__":

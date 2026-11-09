@@ -8,7 +8,6 @@ import pytest
 from scripts.run_batch_eval import (
     _attach_metric_to_rows,
     build_summary,
-    percentile,
     run_batch_eval,
 )
 
@@ -103,14 +102,6 @@ def test_attach_metric_to_rows_uses_per_file_metric() -> None:
 
     assert rows[0]["wer"] == 0.5
     assert rows[1]["wer"] == 0.0
-
-
-def test_percentile_handles_empty_values() -> None:
-    assert percentile([], 50) is None
-
-
-def test_percentile_handles_single_value() -> None:
-    assert percentile([42.0], 95) == 42.0
 
 
 def test_build_summary_reports_strict_and_accent_insensitive_wer() -> None:

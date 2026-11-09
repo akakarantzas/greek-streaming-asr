@@ -18,3 +18,10 @@ def percentile(values: list[float], percentile_value: float) -> float | None:
     upper = min(lower + 1, len(sorted_values) - 1)
     weight = rank - lower
     return sorted_values[lower] * (1 - weight) + sorted_values[upper] * weight
+
+
+def format_optional_float(value: object) -> str:
+    """Three decimals for printing, or "n/a" when there is no value."""
+    if value is None:
+        return "n/a"
+    return f"{float(value):.3f}"
