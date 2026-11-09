@@ -110,7 +110,7 @@ def run_batch_eval(
     try:
         for row in manifest_rows:
             inference_result = inference_fn(row)
-            row_warnings = _coerce_warnings(inference_result.get("warnings", []))
+            row_warnings = inference_result.get("warnings", [])
             warnings.extend(row_warnings)
             per_file_rows.append(
                 {
@@ -122,12 +122,10 @@ def run_batch_eval(
                     "wer": None,
                     "wer_no_accents": None,
                     "cer": None,
-                    "latency_ms": _coerce_float(inference_result.get("latency_ms")),
-                    "gpu_memory_allocated_mb": _coerce_float(
-                        inference_result.get("gpu_memory_allocated_mb")
-                    )
-                    if on_gpu
-                    else None,
+                    "latency_ms": inference_result.get("latency_ms"),
+                    "gpu_memory_allocated_mb": (
+                        inference_result.get("gpu_memory_allocated_mb") if on_gpu else None
+                    ),
                     "duration": row.get("duration"),
                     "model_id_or_path": model_id_or_path,
                     "device": device,
@@ -294,20 +292,6 @@ def _write_csv(path: Path, rows: list[dict]) -> None:
         writer = csv.DictWriter(csv_file, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-
-
-def _coerce_float(value: Any) -> float | None:
-    if value is None:
-        return None
-    return float(value)
-
-
-def _coerce_warnings(value: Any) -> list[str]:
-    if value is None:
-        return []
-    if isinstance(value, str):
-        return [value]
-    return [str(item) for item in value]
 
 
 def _format_summary_value(value: Any) -> str:
