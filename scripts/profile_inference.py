@@ -77,6 +77,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             stream_counts=stream_counts,
             target_lang=args.target_lang,
         )
+        if not device.startswith("cuda"):
+            # GPU fields stay empty on a CPU run, even when the machine has a GPU.
+            profile_summary["avg_gpu_util_pct"] = None
+            for summary in (profile_summary, *concurrency_summary):
+                summary["max_memory_allocated_mb"] = None
 
         _write_json(output_dir / "profile_summary.json", profile_summary)
         _write_json(output_dir / "concurrency_summary.json", concurrency_summary)
