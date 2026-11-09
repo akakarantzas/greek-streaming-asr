@@ -187,8 +187,8 @@ def test_first_call_is_a_warm_up_and_not_timed(tmp_path, monkeypatch) -> None:
     latencies = iter([5000.0, 100.0, 200.0])
     calls: list[str] = []
 
-    def fake_transcribe_file(model, audio_file, target_lang):
-        calls.append(audio_file.name)
+    def fake_transcribe_file(model, audio, target_lang):
+        calls.append(audio.name)
         return {"transcript": "γεια", "latency_ms": next(latencies), "warnings": []}
 
     monkeypatch.setattr(batch_eval, "load_model", lambda **_kwargs: object())

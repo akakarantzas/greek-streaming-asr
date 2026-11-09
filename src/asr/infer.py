@@ -39,7 +39,7 @@ def run_single_file_inference(
     warnings = list(readiness_warnings)
 
     model = load_model(model_id_or_path=model_id_or_path, device=device)
-    transcription = transcribe_file(model=model, audio_file=audio_file, target_lang=target_lang)
+    transcription = transcribe_file(model=model, audio=audio_file, target_lang=target_lang)
     warnings.extend(transcription["warnings"])
     transcript = transcription["transcript"]
     latency_ms = transcription["latency_ms"]
@@ -178,8 +178,11 @@ def language_readiness_for(target_lang: str) -> tuple[str, list[str]]:
     return "auto", []
 
 
-def transcribe_file(model: Any, audio_file: Path, target_lang: str) -> dict:
-    """Transcribe one audio file with an already loaded model; only the model call is timed."""
+def transcribe_file(model: Any, audio: Path | Any, target_lang: str) -> dict:
+    """Transcribe one audio file, or one in-memory 16 kHz array, with an already loaded model.
+
+    Only the model call is timed.
+    """
     transcribe = getattr(model, "transcribe", None)
     if not callable(transcribe):
         raise RuntimeError(
@@ -191,7 +194,7 @@ def transcribe_file(model: Any, audio_file: Path, target_lang: str) -> dict:
     kwargs: dict[str, Any] = {}
     args: list[Any] = []
 
-    audio_values = [str(audio_file)]
+    audio_values = [str(audio) if isinstance(audio, Path) else audio]
     if call_has_named_parameter(transcribe, "audio"):
         kwargs["audio"] = audio_values
     elif call_has_named_parameter(transcribe, "paths2audio_files"):

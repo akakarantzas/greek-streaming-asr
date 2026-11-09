@@ -261,7 +261,7 @@ def _time_model_call(
     warnings: list[str],
 ) -> float:
     # Always go through transcribe(): a torch model is also callable, but that runs forward().
-    result = transcribe_file(model=model, audio_file=Path(audio_input), target_lang=target_lang)
+    result = transcribe_file(model=model, audio=Path(audio_input), target_lang=target_lang)
     warnings.extend(result["warnings"])
     return result["latency_ms"]
 

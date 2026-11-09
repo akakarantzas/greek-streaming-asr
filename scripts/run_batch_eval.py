@@ -96,7 +96,7 @@ def run_batch_eval(
         def inference_fn(row: dict) -> dict:
             return transcribe_file(
                 model=model,
-                audio_file=Path(row["audio_filepath"]),
+                audio=Path(row["audio_filepath"]),
                 target_lang=target_lang,
             )
 

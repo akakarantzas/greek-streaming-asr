@@ -118,3 +118,17 @@ def test_rtf_is_measured_against_new_audio_not_the_whole_buffer() -> None:
 
     assert events[-1]["audio_duration_s"] == 10.0
     assert events[-1]["rtf"] == pytest.approx(1.5)
+
+
+def test_streaming_warns_like_batch_when_target_lang_only_reaches_kwargs() -> None:
+    class KwargsModel:
+        def transcribe(self, audio, **kwargs):
+            return ["partial text"]
+
+    session = ChunkedASRSession(
+        model=KwargsModel(), sample_rate=10, inference_interval_s=0.1, log_events=False
+    )
+
+    event = session.process_chunk(np.array([0.1], dtype=np.float32))
+
+    assert any("unverified" in warning for warning in event["warnings"])

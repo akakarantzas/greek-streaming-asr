@@ -102,6 +102,7 @@ def run_demo(args: argparse.Namespace) -> int:
     )
 
     events: list[dict] = []
+    shown_warnings = set(session.session_warnings)  # the header already printed these
     microphone = MicrophoneAudioStream(chunk_size=chunk_samples)
     start = time.perf_counter()
     try:
@@ -113,6 +114,10 @@ def run_demo(args: argparse.Namespace) -> int:
                 if event is None:
                     continue
                 events.append(event)
+                for warning in event["warnings"]:
+                    if warning not in shown_warnings:
+                        shown_warnings.add(warning)
+                        print(f"\nwarning: {warning}")
                 print_partial_event(event)
     except KeyboardInterrupt:
         print("\nStreaming demo interrupted by user.")

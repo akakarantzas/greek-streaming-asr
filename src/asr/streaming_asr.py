@@ -10,12 +10,11 @@ import numpy as np
 
 from src.asr.infer import (
     GREEK_TARGET_LANG,
-    extract_transcript_text,
     language_readiness_for,
     transcribe_file,
     validate_target_lang,
 )
-from src.asr.introspection import call_accepts_parameter
+from src.asr.introspection import call_has_named_parameter
 from src.audio.microphone import DEFAULT_SAMPLE_RATE
 
 
@@ -84,7 +83,6 @@ class ChunkedASRSession:
         self.mode = "chunked_fallback"
         self.language_readiness, self.session_warnings = language_readiness_for(target_lang)
         self._samples_since_inference = 0
-        self._event_count = 0
 
     def process_chunk(self, chunk: np.ndarray) -> dict | None:
         chunk_array = np.asarray(chunk, dtype=np.float32).reshape(-1)
@@ -137,33 +135,15 @@ class ChunkedASRSession:
 
     def _run_chunked_fallback(self, audio: np.ndarray, warnings: list[str]) -> str:
         transcribe = getattr(self.model, "transcribe", None)
-        if not callable(transcribe):
-            raise RuntimeError(
-                "Loaded ASR model does not expose model.transcribe() for chunked fallback. "
-                "Check the installed NeMo/Nemotron "
-                "3.5 ASR streaming API before running microphone ASR."
-            )
+        # NeMo takes in-memory arrays through audio=; other APIs get a temporary WAV.
+        if call_has_named_parameter(transcribe, "audio"):
+            result = transcribe_file(model=self.model, audio=audio, target_lang=self.target_lang)
+        else:
+            result = self._transcribe_via_temp_wav(audio)
+        warnings.extend(result["warnings"])
+        return result["transcript"]
 
-        if call_accepts_parameter(transcribe, "audio"):
-            kwargs: dict[str, Any] = {"audio": [audio]}
-            if call_accepts_parameter(transcribe, "sample_rate"):
-                kwargs["sample_rate"] = self.sample_rate
-            if call_accepts_parameter(transcribe, "target_lang"):
-                kwargs["target_lang"] = self.target_lang
-            else:
-                warnings.append(
-                    "Installed model.transcribe() API does not expose target_lang; continuing "
-                    "without target-language conditioning."
-                )
-            return extract_transcript_text(transcribe(**kwargs))
-
-        return self._run_chunked_fallback_with_temp_wav(audio, warnings)
-
-    def _run_chunked_fallback_with_temp_wav(
-        self,
-        audio: np.ndarray,
-        warnings: list[str],
-    ) -> str:
+    def _transcribe_via_temp_wav(self, audio: np.ndarray) -> dict:
         try:
             import soundfile as sf
         except ImportError as exc:
@@ -172,25 +152,10 @@ class ChunkedASRSession:
                 "model.transcribe() does not accept in-memory audio."
             ) from exc
 
-        self._event_count += 1
-        temp_path: Path | None = None
-        try:
-            with tempfile.NamedTemporaryFile(
-                suffix=f"_stream_chunk_{self._event_count}.wav",
-                delete=False,
-            ) as temp_file:
-                temp_path = Path(temp_file.name)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir) / "stream_chunk.wav"
             sf.write(temp_path, audio, self.sample_rate)
-            result = transcribe_file(
-                model=self.model,
-                audio_file=temp_path,
-                target_lang=self.target_lang,
-            )
-            warnings.extend(result["warnings"])
-            return result["transcript"]
-        finally:
-            if temp_path is not None:
-                temp_path.unlink(missing_ok=True)
+            return transcribe_file(model=self.model, audio=temp_path, target_lang=self.target_lang)
 
 
 def calculate_rtf(processing_time_s: float, audio_duration_s: float) -> float:
