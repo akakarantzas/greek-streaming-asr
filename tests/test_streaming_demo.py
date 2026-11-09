@@ -12,12 +12,11 @@ from src.asr.model_loader import DEFAULT_MODEL_ID
 
 def test_parser_defaults() -> None:
     parser = build_arg_parser()
-    args = parser.parse_args(["--language", "el"])
+    args = parser.parse_args([])
 
     assert args.model_id_or_path == DEFAULT_MODEL_ID
     assert args.chunk_ms == 100
     assert args.inference_window_ms == 1000
-    assert args.language == "el"
     assert args.target_lang == "el"
     assert args.device == "auto"
     assert args.max_seconds is None
@@ -33,8 +32,6 @@ def test_parser_overrides() -> None:
             "200",
             "--inference-window-ms",
             "1500",
-            "--language",
-            "el",
             "--target-lang",
             "el",
             "--device",
@@ -47,7 +44,6 @@ def test_parser_overrides() -> None:
     assert args.model_id_or_path == "model.nemo"
     assert args.chunk_ms == 200
     assert args.inference_window_ms == 1500
-    assert args.language == "el"
     assert args.target_lang == "el"
     assert args.device == "cpu"
     assert args.max_seconds == 5

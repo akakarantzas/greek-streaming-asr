@@ -13,7 +13,6 @@
 ## Milestone 1 - Evaluation Infrastructure
 
 - [x] WER implemented and tested
-- [x] CER implemented and tested
 - [x] manifest validator implemented
 - [ ] Greek test manifest created and labeled adaptation-ready/exploratory
 - [ ] normalized baseline WER table generated

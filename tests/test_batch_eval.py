@@ -6,7 +6,7 @@ import json
 import pytest
 
 from scripts.run_batch_eval import (
-    _attach_metric_to_rows,
+    _attach_wer_to_rows,
     build_summary,
     run_batch_eval,
 )
@@ -32,8 +32,7 @@ def test_crash_mid_run_keeps_finished_transcripts(tmp_path) -> None:
         run_batch_eval(
             manifest_path=str(manifest),
             model_id_or_path="model",
-            language="el",
-            target_lang="el",
+                target_lang="el",
             output=str(output),
             summary_output=str(tmp_path / "summary.json"),
             device="cpu",
@@ -64,7 +63,6 @@ def test_build_summary_computes_greek_wer_and_latency_stats() -> None:
 
     summary = build_summary(
         per_file_rows=rows,
-        language="el",
         model_id_or_path="model",
         target_lang="el",
         language_readiness="adaptation_ready",
@@ -81,24 +79,20 @@ def test_build_summary_computes_greek_wer_and_latency_stats() -> None:
     assert summary["substitutions"] == 1
 
 
-def test_attach_metric_to_rows_uses_per_file_metric() -> None:
+def test_attach_wer_to_rows_uses_per_file_metric() -> None:
     rows = [
         {
             "reference_text": "hello world",
             "hypothesis_text": "hello mars",
             "wer": None,
-            "cer": None,
         },
         {
             "reference_text": "good morning",
             "hypothesis_text": "good morning",
             "wer": None,
-            "cer": None,
         },
     ]
-    summary = {"metric_name": "wer", "metric_value": 0.25}
-
-    _attach_metric_to_rows(rows, summary)
+    _attach_wer_to_rows(rows)
 
     assert rows[0]["wer"] == 0.5
     assert rows[1]["wer"] == 0.0
@@ -115,7 +109,6 @@ def test_build_summary_reports_strict_and_accent_insensitive_wer() -> None:
 
     summary = build_summary(
         per_file_rows=rows,
-        language="el",
         model_id_or_path="model",
         target_lang="el",
         language_readiness="adaptation_ready",
@@ -127,7 +120,7 @@ def test_build_summary_reports_strict_and_accent_insensitive_wer() -> None:
     assert summary["metric_value_no_accents"] == 0.0
 
 
-def test_attach_metric_to_rows_adds_accent_insensitive_wer() -> None:
+def test_attach_wer_to_rows_adds_accent_insensitive_wer() -> None:
     rows = [
         {
             "reference_text": "πότε έρχεσαι",
@@ -137,7 +130,7 @@ def test_attach_metric_to_rows_adds_accent_insensitive_wer() -> None:
         },
     ]
 
-    _attach_metric_to_rows(rows, {"metric_name": "wer", "metric_value": 1.0})
+    _attach_wer_to_rows(rows)
 
     assert rows[0]["wer"] == 1.0
     assert rows[0]["wer_no_accents"] == 0.0
@@ -153,8 +146,7 @@ def test_each_results_csv_gets_its_own_summary(tmp_path) -> None:
         run_batch_eval(
             manifest_path=str(manifest),
             model_id_or_path="model",
-            language="el",
-            target_lang="el",
+                target_lang="el",
             output=str(tmp_path / f"{name}.csv"),
             device="cpu",
             validate_files=False,
@@ -188,7 +180,6 @@ def test_first_call_is_a_warm_up_and_not_timed(tmp_path, monkeypatch) -> None:
     summary = run_batch_eval(
         manifest_path=str(manifest),
         model_id_or_path="model",
-        language="el",
         target_lang="el",
         output=str(tmp_path / "results.csv"),
         device="cpu",
@@ -211,7 +202,6 @@ def test_cpu_run_reports_no_gpu_even_when_one_exists(tmp_path, monkeypatch) -> N
     summary = run_batch_eval(
         manifest_path=str(manifest),
         model_id_or_path="model",
-        language="el",
         target_lang="el",
         output=str(output),
         device="cpu",

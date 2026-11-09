@@ -7,11 +7,9 @@ Fields written by the scripts today, with fields that are not implemented yet li
 - `audio_filepath`
 - `reference_text`
 - `hypothesis_text`
-- `language`
 - `language_readiness`
-- `wer` (accents counted; empty when the language uses CER)
+- `wer` (accents counted)
 - `wer_no_accents`
-- `cer` (empty for Greek, which is scored with WER)
 - `latency_ms`
 - `gpu_memory_allocated_mb` (empty on CPU)
 - `duration` (from the manifest, when present)
@@ -21,9 +19,8 @@ Fields written by the scripts today, with fields that are not implemented yet li
 
 ## Summary JSON (`scripts/run_batch_eval.py --summary-output`, default `<output>_summary.json` next to the CSV)
 
-- `language`
 - `num_files`
-- `metric_name` (`wer` for Greek)
+- `metric_name` (`wer`)
 - `metric_value` (accents counted, headline)
 - `metric_value_no_accents`
 - `avg_latency_ms`

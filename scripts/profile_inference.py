@@ -18,7 +18,6 @@ from src.profiling.gpu_metrics import concurrency_test, profile_inference  # noq
 from src.profiling.stats import format_optional_float  # noqa: E402
 
 
-LANGUAGE_CHOICES = ("el",)
 TARGET_LANG_CHOICES = (GREEK_TARGET_LANG,)
 
 
@@ -32,7 +31,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Hugging Face model ID or local .nemo checkpoint path.",
     )
     parser.add_argument("--manifest", required=True, help="Path to JSONL manifest.")
-    parser.add_argument("--language", required=True, choices=LANGUAGE_CHOICES)
     parser.add_argument(
         "--target-lang",
         default=GREEK_TARGET_LANG,
@@ -70,7 +68,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         profile_summary = profile_inference(
             model=model,
             audio_inputs=audio_inputs,
-            label=f"{args.language}:{args.target_lang}",
+            label=args.target_lang,
             target_lang=args.target_lang,
         )
         concurrency_summary = concurrency_test(

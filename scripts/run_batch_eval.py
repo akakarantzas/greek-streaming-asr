@@ -19,14 +19,12 @@ from src.asr.model_loader import (
     load_model,
     resolve_device,
 )
-from src.eval.cer import compute_cer
 from src.eval.manifest import load_jsonl_manifest
 from src.eval.wer import compute_wer
 from src.profiling.stats import mean as _mean
 from src.profiling.stats import percentile
 
 
-LANGUAGE_CHOICES = ("el",)
 TARGET_LANG_CHOICES = (GREEK_TARGET_LANG,)
 
 
@@ -39,12 +37,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--model-id-or-path",
         default=DEFAULT_MODEL_ID,
         help="Hugging Face model ID or local .nemo checkpoint path.",
-    )
-    parser.add_argument(
-        "--language",
-        required=True,
-        choices=LANGUAGE_CHOICES,
-        help="Evaluation language. Cantonese (Yue) is intentionally disabled for now.",
     )
     parser.add_argument(
         "--target-lang",
@@ -75,7 +67,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
 def run_batch_eval(
     manifest_path: str,
     model_id_or_path: str,
-    language: str,
     target_lang: str,
     output: str,
     summary_output: str | None = None,
@@ -83,7 +74,8 @@ def run_batch_eval(
     validate_files: bool = True,
     inference_fn: Callable[[dict], dict] | None = None,
 ) -> dict:
-    _validate_language_target(language, target_lang)
+    if target_lang != GREEK_TARGET_LANG:
+        raise ValueError(f"Batch evaluation is Greek-only: use --target-lang {GREEK_TARGET_LANG}")
     device = resolve_device(device)
     # GPU fields stay empty on a CPU run, even when the machine has a GPU.
     on_gpu = device.startswith("cuda")
@@ -117,11 +109,9 @@ def run_batch_eval(
                     "audio_filepath": row["audio_filepath"],
                     "reference_text": row["text"],
                     "hypothesis_text": str(inference_result.get("transcript", "")),
-                    "language": language,
                     "language_readiness": language_readiness,
                     "wer": None,
                     "wer_no_accents": None,
-                    "cer": None,
                     "latency_ms": inference_result.get("latency_ms"),
                     "gpu_memory_allocated_mb": (
                         inference_result.get("gpu_memory_allocated_mb") if on_gpu else None
@@ -145,7 +135,6 @@ def run_batch_eval(
 
     summary = build_summary(
         per_file_rows=per_file_rows,
-        language=language,
         model_id_or_path=model_id_or_path,
         target_lang=target_lang,
         language_readiness=language_readiness,
@@ -154,7 +143,7 @@ def run_batch_eval(
     )
     summary["device"] = device
     summary["gpu_name"] = get_gpu_name() if on_gpu else None
-    _attach_metric_to_rows(per_file_rows, summary)
+    _attach_wer_to_rows(per_file_rows)
     _write_csv(output_path, per_file_rows)
 
     # Next to the CSV by default, so evaluating a second test set never overwrites the first summary.
@@ -172,7 +161,6 @@ def run_batch_eval(
 
 def build_summary(
     per_file_rows: list[dict],
-    language: str,
     model_id_or_path: str,
     target_lang: str,
     language_readiness: str,
@@ -182,21 +170,8 @@ def build_summary(
     references = [str(row["reference_text"]) for row in per_file_rows]
     hypotheses = [str(row["hypothesis_text"]) for row in per_file_rows]
 
-    if language == "el":
-        metric = compute_wer(references, hypotheses)
-        metric_name = "wer"
-        metric_value = metric["wer"]
-        metric_value_no_accents = compute_wer(
-            references, hypotheses, strip_accents=True
-        )["wer"]
-    elif language == "yue":
-        # Planned Cantonese hook: not reachable from the CLI while LANGUAGE_CHOICES is Greek-only.
-        metric = compute_cer(references, hypotheses)
-        metric_name = "cer"
-        metric_value = metric["cer"]
-        metric_value_no_accents = None
-    else:
-        raise ValueError(f"Unsupported language: {language}")
+    metric = compute_wer(references, hypotheses)
+    metric_value_no_accents = compute_wer(references, hypotheses, strip_accents=True)["wer"]
 
     latencies = [
         float(row["latency_ms"])
@@ -205,13 +180,10 @@ def build_summary(
     ]
 
     return {
-        "language": language,
         "num_files": len(per_file_rows),
-        "metric_name": metric_name,
-        "metric_value": float(metric_value),
-        "metric_value_no_accents": (
-            None if metric_value_no_accents is None else float(metric_value_no_accents)
-        ),
+        "metric_name": "wer",
+        "metric_value": float(metric["wer"]),
+        "metric_value_no_accents": float(metric_value_no_accents),
         "avg_latency_ms": _mean(latencies),
         "p50_latency_ms": percentile(latencies, 50),
         "p95_latency_ms": percentile(latencies, 95),
@@ -228,7 +200,6 @@ def build_summary(
 
 def print_summary(summary: dict) -> None:
     columns = [
-        "language",
         "num_files",
         "metric_name",
         "metric_value",
@@ -251,7 +222,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         run_batch_eval(
             manifest_path=args.manifest,
             model_id_or_path=args.model_id_or_path,
-            language=args.language,
             target_lang=args.target_lang,
             output=args.output,
             summary_output=args.summary_output,
@@ -264,27 +234,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
-def _validate_language_target(language: str, target_lang: str) -> None:
-    if language == "el" and target_lang != GREEK_TARGET_LANG:
-        raise ValueError(f"Greek evaluation requires --target-lang {GREEK_TARGET_LANG}")
-    if language not in LANGUAGE_CHOICES:
-        raise ValueError(f"Unsupported language: {language}")
-
-
-def _attach_metric_to_rows(per_file_rows: list[dict], summary: dict) -> None:
-    metric_name = summary["metric_name"]
+def _attach_wer_to_rows(per_file_rows: list[dict]) -> None:
     for row in per_file_rows:
-        reference = str(row["reference_text"])
-        hypothesis = str(row["hypothesis_text"])
-        if metric_name == "wer":
-            row[metric_name] = compute_wer([reference], [hypothesis])["wer"]
-            row["wer_no_accents"] = compute_wer(
-                [reference], [hypothesis], strip_accents=True
-            )["wer"]
-        elif metric_name == "cer":
-            row[metric_name] = compute_cer([reference], [hypothesis])["cer"]
-        else:
-            raise ValueError(f"Unsupported metric_name: {metric_name}")
+        reference = [str(row["reference_text"])]
+        hypothesis = [str(row["hypothesis_text"])]
+        row["wer"] = compute_wer(reference, hypothesis)["wer"]
+        row["wer_no_accents"] = compute_wer(reference, hypothesis, strip_accents=True)["wer"]
 
 
 def _write_csv(path: Path, rows: list[dict]) -> None:

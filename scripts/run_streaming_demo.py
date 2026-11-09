@@ -25,7 +25,6 @@ from src.profiling.stats import mean as _mean  # noqa: E402
 from src.profiling.stats import percentile  # noqa: E402
 
 
-LANGUAGE_CHOICES = ("el",)
 TARGET_LANG_CHOICES = (GREEK_TARGET_LANG, "auto")
 
 
@@ -49,12 +48,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=1000,
         help="How often to run ASR over the rolling buffer, in milliseconds.",
-    )
-    parser.add_argument(
-        "--language",
-        choices=LANGUAGE_CHOICES,
-        required=True,
-        help="Display language label.",
     )
     parser.add_argument(
         "--target-lang",
@@ -93,7 +86,6 @@ def run_demo(args: argparse.Namespace) -> int:
         target_lang=args.target_lang,
         chunk_ms=args.chunk_ms,
         inference_window_ms=args.inference_window_ms,
-        language=args.language,
         language_readiness=session.language_readiness,
         readiness_warnings=session.session_warnings,
         device=device,
@@ -152,7 +144,6 @@ def print_startup_header(
     target_lang: str,
     chunk_ms: int,
     inference_window_ms: int,
-    language: str,
     language_readiness: str,
     readiness_warnings: list[str],
     device: str,
@@ -164,7 +155,6 @@ def print_startup_header(
     print(f"target_lang: {target_lang}")
     print(f"chunk_ms: {chunk_ms}")
     print(f"inference_window_ms: {inference_window_ms}")
-    print(f"language: {language}")
     print(f"language_readiness: {language_readiness}")
     for warning in readiness_warnings:
         print(f"warning: {warning}")
