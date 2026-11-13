@@ -103,6 +103,8 @@ Run evaluation:
 python scripts/run_batch_eval.py --manifest data/fleurs/el_gr_test.jsonl --target-lang el --output experiments/baseline/el_results.csv
 ```
 
+Pass `--revision <commit hash or tag>` to `run_batch_eval.py` and `profile_inference.py` to pin the model version; it is recorded in the summary as `model_revision`. Without it, the hub's latest revision at run time is used and the field is null.
+
 Greek uses `--target-lang el`, the default. NeMo matches the bare code `el` to a model's `el-GR` prompt too, so the same value works for every Greek-capable model. The streaming demo and single-file inference also accept `--target-lang auto`.
 
 Run the streaming demo:

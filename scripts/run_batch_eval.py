@@ -39,6 +39,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Hugging Face model ID or local .nemo checkpoint path.",
     )
     parser.add_argument(
+        "--revision",
+        default=None,
+        help="Hugging Face model revision (commit hash or tag); recorded in the summary.",
+    )
+    parser.add_argument(
         "--target-lang",
         default=GREEK_TARGET_LANG,
         choices=TARGET_LANG_CHOICES,
@@ -73,6 +78,7 @@ def run_batch_eval(
     device: str = "auto",
     validate_files: bool = True,
     inference_fn: Callable[[dict], dict] | None = None,
+    revision: str | None = None,
 ) -> dict:
     if target_lang != GREEK_TARGET_LANG:
         raise ValueError(f"Batch evaluation is Greek-only: use --target-lang {GREEK_TARGET_LANG}")
@@ -83,7 +89,7 @@ def run_batch_eval(
     language_readiness, readiness_warnings = language_readiness_for(target_lang)
 
     if inference_fn is None:
-        model = load_model(model_id_or_path=model_id_or_path, device=device)
+        model = load_model(model_id_or_path=model_id_or_path, device=device, revision=revision)
 
         def inference_fn(row: dict) -> dict:
             return transcribe_file(
@@ -141,6 +147,8 @@ def run_batch_eval(
         manifest_path=manifest_path,
         warnings=warnings,
     )
+    # None means the hub's latest at run time, so pass --revision for results you publish.
+    summary["model_revision"] = revision
     summary["device"] = device
     summary["gpu_name"] = get_gpu_name() if on_gpu else None
     _attach_wer_to_rows(per_file_rows)
@@ -227,6 +235,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             summary_output=args.summary_output,
             device=args.device,
             validate_files=args.validate_files,
+            revision=args.revision,
         )
     except (ValueError, RuntimeError, ImportError) as exc:
         print(f"Batch evaluation failed: {exc}", file=sys.stderr)

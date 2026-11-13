@@ -30,6 +30,7 @@ Fields written by the scripts today, with fields that are not implemented yet li
 - `deletions`
 - `insertions`
 - `model_id_or_path`
+- `model_revision` (from `--revision`; null means the hub's latest at run time)
 - `target_lang`
 - `language_readiness`
 - `warnings`
@@ -52,5 +53,5 @@ Fields written by the scripts today, with fields that are not implemented yet li
 
 ## Not implemented yet
 
-- Summary: `model_revision`, `total_words`, `total_chars`, `normalization`, `gpu_memory_allocated_mb_max`
+- Summary: `total_words`, `total_chars`, `normalization`, `gpu_memory_allocated_mb_max`
 - Environment check: `platform`, `torch_cuda_version`, `driver_version`, `warnings`

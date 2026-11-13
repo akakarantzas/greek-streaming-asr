@@ -55,7 +55,8 @@ def test_cpu_profile_reports_no_gpu_numbers(tmp_path, monkeypatch) -> None:
     (tmp_path / "a.wav").write_bytes(b"")
     manifest = tmp_path / "manifest.jsonl"
     manifest.write_text(json.dumps({"audio_filepath": "a.wav", "text": "γεια"}), encoding="utf-8")
-    monkeypatch.setattr(profile_script, "load_model", lambda **_kwargs: object())
+    loaded: dict = {}
+    monkeypatch.setattr(profile_script, "load_model", lambda **kwargs: loaded.update(kwargs))
     monkeypatch.setattr(
         profile_script,
         "profile_inference",
@@ -69,7 +70,7 @@ def test_cpu_profile_reports_no_gpu_numbers(tmp_path, monkeypatch) -> None:
     out = tmp_path / "out"
 
     assert profile_script.main(
-        ["--manifest", str(manifest), "--output-dir", str(out), "--device", "cpu"]
+        ["--manifest", str(manifest), "--output-dir", str(out), "--device", "cpu", "--revision", "abc123"]
     ) == 0
 
     profile = json.loads((out / "profile_summary.json").read_text(encoding="utf-8"))
@@ -77,3 +78,5 @@ def test_cpu_profile_reports_no_gpu_numbers(tmp_path, monkeypatch) -> None:
     assert profile["max_memory_allocated_mb"] is None
     assert profile["avg_gpu_util_pct"] is None
     assert concurrency[0]["max_memory_allocated_mb"] is None
+    assert loaded["revision"] == "abc123"
+    assert profile["model_revision"] == "abc123"

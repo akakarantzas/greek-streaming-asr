@@ -212,3 +212,32 @@ def test_cpu_run_reports_no_gpu_even_when_one_exists(tmp_path, monkeypatch) -> N
     assert summary["gpu_name"] is None
     with output.open(encoding="utf-8") as csv_file:
         assert next(csv.DictReader(csv_file))["gpu_memory_allocated_mb"] == ""
+
+
+def test_revision_reaches_the_loader_and_the_summary(tmp_path, monkeypatch) -> None:
+    import scripts.run_batch_eval as batch_eval
+
+    manifest = tmp_path / "manifest.jsonl"
+    manifest.write_text(json.dumps({"audio_filepath": "a.wav", "text": "γεια"}) + "\n", encoding="utf-8")
+    loaded: dict = {}
+    monkeypatch.setattr(batch_eval, "load_model", lambda **kwargs: loaded.update(kwargs))
+    monkeypatch.setattr(
+        batch_eval,
+        "transcribe_file",
+        lambda **_kwargs: {"transcript": "γεια", "latency_ms": 1.0, "warnings": []},
+    )
+    output = tmp_path / "results.csv"
+
+    assert batch_eval.main(
+        [
+            "--manifest", str(manifest),
+            "--output", str(output),
+            "--device", "cpu",
+            "--no-validate-files",
+            "--revision", "abc123",
+        ]
+    ) == 0
+
+    assert loaded["revision"] == "abc123"
+    summary = json.loads((tmp_path / "results_summary.json").read_text(encoding="utf-8"))
+    assert summary["model_revision"] == "abc123"

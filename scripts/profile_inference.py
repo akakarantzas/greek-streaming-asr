@@ -30,6 +30,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=DEFAULT_MODEL_ID,
         help="Hugging Face model ID or local .nemo checkpoint path.",
     )
+    parser.add_argument(
+        "--revision",
+        default=None,
+        help="Hugging Face model revision (commit hash or tag); recorded in the profile summary.",
+    )
     parser.add_argument("--manifest", required=True, help="Path to JSONL manifest.")
     parser.add_argument(
         "--target-lang",
@@ -64,7 +69,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         audio_inputs = [row["audio_filepath"] for row in manifest_rows]
 
         device = resolve_device(args.device)
-        model = load_model(model_id_or_path=args.model_id_or_path, device=device)
+        model = load_model(
+            model_id_or_path=args.model_id_or_path, device=device, revision=args.revision
+        )
         profile_summary = profile_inference(
             model=model,
             audio_inputs=audio_inputs,
@@ -77,6 +84,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             stream_counts=stream_counts,
             target_lang=args.target_lang,
         )
+        profile_summary["model_revision"] = args.revision
         if not device.startswith("cuda"):
             # GPU fields stay empty on a CPU run, even when the machine has a GPU.
             profile_summary["avg_gpu_util_pct"] = None
