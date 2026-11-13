@@ -237,7 +237,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             validate_files=args.validate_files,
             revision=args.revision,
         )
-    except (ValueError, RuntimeError, ImportError) as exc:
+    except (OSError, ValueError, RuntimeError, ImportError) as exc:
         print(f"Batch evaluation failed: {exc}", file=sys.stderr)
         return 1
     return 0

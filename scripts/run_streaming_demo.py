@@ -200,7 +200,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return run_demo(args)
-    except (RuntimeError, ValueError, ImportError) as exc:
+    except (OSError, RuntimeError, ValueError, ImportError) as exc:
         print(f"Streaming demo failed: {exc}", file=sys.stderr)
         return 1
 

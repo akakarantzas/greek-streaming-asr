@@ -80,3 +80,32 @@ def test_cpu_profile_reports_no_gpu_numbers(tmp_path, monkeypatch) -> None:
     assert concurrency[0]["max_memory_allocated_mb"] is None
     assert loaded["revision"] == "abc123"
     assert profile["model_revision"] == "abc123"
+
+
+@pytest.mark.parametrize(
+    ("module_name", "extra_args"),
+    [
+        ("scripts.run_batch_eval", ["--output", "results.csv", "--no-validate-files"]),
+        ("scripts.profile_inference", ["--output-dir", "out"]),
+        ("scripts.run_streaming_demo", []),
+    ],
+)
+def test_missing_checkpoint_prints_a_clean_error(
+    module_name, extra_args, tmp_path, monkeypatch, capsys
+) -> None:
+    import importlib
+
+    script = importlib.import_module(module_name)
+    (tmp_path / "a.wav").write_bytes(b"")
+    manifest = tmp_path / "manifest.jsonl"
+    manifest.write_text(json.dumps({"audio_filepath": "a.wav", "text": "γεια"}), encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    def missing_checkpoint(**_kwargs):
+        raise FileNotFoundError("Local NeMo checkpoint does not exist: missing.nemo")
+
+    monkeypatch.setattr(script, "load_model", missing_checkpoint)
+    manifest_args = [] if module_name.endswith("demo") else ["--manifest", str(manifest)]
+
+    assert script.main([*manifest_args, *extra_args, "--device", "cpu"]) == 1
+    assert "missing.nemo" in capsys.readouterr().err

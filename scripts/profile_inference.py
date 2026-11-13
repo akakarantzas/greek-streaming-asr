@@ -94,7 +94,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         _write_json(output_dir / "profile_summary.json", profile_summary)
         _write_json(output_dir / "concurrency_summary.json", concurrency_summary)
         print_profile_summary(profile_summary, concurrency_summary, output_dir)
-    except (ValueError, RuntimeError, ImportError) as exc:
+    except (OSError, ValueError, RuntimeError, ImportError) as exc:
         print(f"Profiling failed: {exc}", file=sys.stderr)
         return 1
     return 0
