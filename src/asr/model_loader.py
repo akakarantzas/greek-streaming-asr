@@ -54,6 +54,9 @@ def load_model(
     print(f"Loading ASR model: {model_id_or_path}")
     if revision:
         print(f"Requested model revision: {revision}")
+    # restore_from() has no revision, so accepting one would let summaries record a version never loaded.
+    if revision and _looks_like_local_nemo_path(model_id_or_path):
+        raise ValueError("--revision applies to Hugging Face models, not local .nemo files")
 
     try:
         import torch

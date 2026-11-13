@@ -11,6 +11,7 @@ from src.asr.model_loader import (
     _validate_local_nemo_path,
     get_gpu_memory_allocated_mb,
     get_gpu_name,
+    load_model,
     resolve_device,
 )
 
@@ -55,6 +56,9 @@ def test_validate_local_nemo_path_rejects_directory(tmp_path) -> None:
         _validate_local_nemo_path(str(checkpoint))
 
 
+def test_revision_is_rejected_for_a_local_checkpoint() -> None:
+    with pytest.raises(ValueError, match="not local .nemo files"):
+        load_model(model_id_or_path="checkpoints/ft.nemo", device="cpu", revision="abc123")
 
 
 def test_gpu_memory_is_none_when_torch_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
