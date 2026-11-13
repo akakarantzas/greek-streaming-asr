@@ -80,3 +80,15 @@ def test_summarize_session_handles_no_events() -> None:
 
 def test_chunk_ms_to_samples() -> None:
     assert chunk_ms_to_samples(100, 16000) == 1600
+
+
+def test_bad_inference_window_fails_before_loading_the_model(monkeypatch, capsys) -> None:
+    import scripts.run_streaming_demo as demo
+
+    def load_model(**_kwargs):
+        raise AssertionError("model was loaded before the arguments were checked")
+
+    monkeypatch.setattr(demo, "load_model", load_model)
+
+    assert demo.main(["--inference-window-ms", "0", "--device", "cpu"]) == 1
+    assert "--inference-window-ms must be positive" in capsys.readouterr().err

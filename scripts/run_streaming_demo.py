@@ -71,6 +71,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 def run_demo(args: argparse.Namespace) -> int:
     chunk_samples = chunk_ms_to_samples(args.chunk_ms, DEFAULT_SAMPLE_RATE)
+    # Checked here, not only in ChunkedASRSession, so a typo fails before the slow model load.
+    if args.inference_window_ms <= 0:
+        raise ValueError("--inference-window-ms must be positive")
     inference_window_s = args.inference_window_ms / 1000
 
     device = resolve_device(args.device)
