@@ -1,0 +1,22 @@
+{
+  "num_files": 10,
+  "metric_name": "wer",
+  "metric_value": 0.4803921568627451,
+  "metric_value_no_accents": 0.47549019607843135,
+  "avg_latency_ms": 8032.409525699995,
+  "p50_latency_ms": 4961.012993499991,
+  "p95_latency_ms": 22648.14901699995,
+  "substitutions": 89,
+  "deletions": 8,
+  "insertions": 1,
+  "model_id_or_path": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+  "target_lang": "el",
+  "language_readiness": "adaptation_ready",
+  "warnings": [
+    "Greek (el) output is exploratory/adaptation-ready; quality is not confirmed until a fine-tuned model is evaluated."
+  ],
+  "manifest_path": "data/fleurs/el_gr_test_first10.jsonl",
+  "model_revision": null,
+  "device": "cpu",
+  "gpu_name": null
+}
