@@ -73,6 +73,8 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+Docker (CPU or NVIDIA GPU, NeMo from main as the model card asks): see the commands at the top of `docker/Dockerfile`.
+
 ## Supported Languages
 
 - Greek: baseline evaluation and fine-tuning scaffolding in progress with WER
