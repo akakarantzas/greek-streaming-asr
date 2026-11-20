@@ -1,6 +1,6 @@
 # Greek Streaming ASR
 
-[![tests](https://github.com/akakarantzas/multilingual-streaming-asr/actions/workflows/tests.yml/badge.svg)](https://github.com/akakarantzas/multilingual-streaming-asr/actions/workflows/tests.yml)
+[![tests](https://github.com/akakarantzas/greek-streaming-asr/actions/workflows/tests.yml/badge.svg)](https://github.com/akakarantzas/greek-streaming-asr/actions/workflows/tests.yml)
 
 ![Side-by-side streaming demo (mock data)](docs/assets/demo-hero.png)
 
