@@ -54,6 +54,17 @@ def test_target_lang_support_from_a_nemo_style_transcribe_config(tmp_path) -> No
     assert result["warnings"] == []
 
 
+def test_transcribe_file_strips_language_tags(tmp_path) -> None:
+    # Real Nemotron 3.5 output: one tag after each sentence.
+    class TaggedModel:
+        def transcribe(self, audio):
+            return ["Η ζεστή σοκολάτα. <el-GR> Οι φρουτοχυμοί είναι ακριβοί. <el-GR>"]
+
+    result = transcribe_file(TaggedModel(), tmp_path / "a.wav", "el")
+
+    assert result["transcript"] == "Η ζεστή σοκολάτα. Οι φρουτοχυμοί είναι ακριβοί."
+
+
 def test_extract_transcript_rejects_unknown_result_type() -> None:
     with pytest.raises(RuntimeError, match="Could not extract transcript text"):
         extract_transcript_text(object())

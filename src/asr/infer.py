@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -21,6 +22,8 @@ ALLOWED_AUDIO_SUFFIXES = {".wav", ".flac"}
 # The bare code, not "el-GR": NeMo matches it to either form, so it works for every Greek model.
 GREEK_TARGET_LANG = "el"
 ALLOWED_TARGET_LANGS = {GREEK_TARGET_LANG, "auto"}
+# Nemotron 3.5 appends a tag like "<el-GR>" after each sentence; WER cleanup would score it as words.
+LANGUAGE_TAG_PATTERN = re.compile(r"\s*<[a-z]{2,3}-[A-Z]{2}>")
 
 
 def run_single_file_inference(
@@ -225,7 +228,7 @@ def transcribe_file(model: Any, audio: Path | Any, target_lang: str) -> dict:
     raw_transcript = transcribe(*args, **kwargs)
     latency_ms = (time.perf_counter() - start) * 1000
     return {
-        "transcript": extract_transcript_text(raw_transcript),
+        "transcript": LANGUAGE_TAG_PATTERN.sub("", extract_transcript_text(raw_transcript)).strip(),
         "latency_ms": latency_ms,
         "gpu_memory_allocated_mb": get_gpu_memory_allocated_mb(),
         "target_lang_support": target_lang_support,
